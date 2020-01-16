@@ -84,16 +84,43 @@ namespace Vendr.PaymentProviders.Dibs
 
         public override CallbackResponse ProcessCallback(OrderReadOnly order, HttpRequestBase request, DibsSettings settings)
         {
-            return new CallbackResponse
+            try
             {
-                TransactionInfo = new TransactionInfo
+                var authkey = request.Form["authkey"];
+                var transaction = request.Form["transact"];
+                var currencyCode = request.Form["currency"];
+                var strAmount = request.Form["amount"];
+                var strFee = request.Form["fee"] ?? "0"; // Not always in the return data
+                var captured = request.Form["capturenow"] == "1";
+
+                var totalAmount = decimal.Parse(strAmount, CultureInfo.InvariantCulture) + decimal.Parse(strFee, CultureInfo.InvariantCulture);
+
+                var md5Check = $"transact={transaction}&amount={totalAmount.ToString("0", CultureInfo.InvariantCulture)}&currency={currencyCode}";
+
+                // authkey = MD5(key2 + MD5(key1 + "transact=<transact>&amount=<amount>&currency=<currency>"))
+                if (GetMD5Hash(settings.MD5Key2 + GetMD5Hash(settings.MD5Key1 + md5Check)) == authkey)
                 {
-                    AmountAuthorized = order.TotalPrice.Value.WithTax,
-                    TransactionFee = 0m,
-                    TransactionId = Guid.NewGuid().ToString("N"),
-                    PaymentStatus = PaymentStatus.Authorized
+                    return new CallbackResponse
+                    {
+                        TransactionInfo = new TransactionInfo
+                        {
+                            AmountAuthorized = totalAmount / 100M,
+                            TransactionId = transaction,
+                            PaymentStatus = !captured ? PaymentStatus.Authorized : PaymentStatus.Captured
+                        }
+                    };
                 }
-            };
+                else
+                {
+                    Vendr.Log.Warn<DibsPaymentProvider>($"Dibs [{order.OrderNumber}] - MD5Sum security check failed");
+                }
+            }
+            catch (Exception ex)
+            {
+                Vendr.Log.Error<DibsPaymentProvider>(ex, "Dibs - ProcessCallback");
+            }
+
+            return CallbackResponse.Empty;
         }
 
         public override ApiResponse CancelPayment(OrderReadOnly order, DibsSettings settings)
