@@ -1,10 +1,11 @@
 using System;
-using System.Collections.Generic;
 using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
 using System.Web;
 using System.Web.Mvc;
+using Flurl;
+using Flurl.Http;
 using Vendr.Core;
 using Vendr.Core.Models;
 using Vendr.Core.Web.Api;
@@ -15,8 +16,6 @@ namespace Vendr.PaymentProviders.Dibs
     [PaymentProvider("dibs-d2", "DIBS D2", "DIBS D2 payment provider for one time payments")]
     public class DibsPaymentProvider : PaymentProviderBase<DibsSettings>
     {
-        
-
         public DibsPaymentProvider(VendrContext vendr)
             : base(vendr)
         { }
@@ -123,6 +122,50 @@ namespace Vendr.PaymentProviders.Dibs
             return CallbackResponse.Empty;
         }
 
+        public override ApiResponse FetchPaymentStatus(OrderReadOnly order, DibsSettings settings)
+        {
+            try
+            {
+                var response = $"https://@payment.architrade.com/cgi-adm/payinfo.cgi"
+                    .WithBasicAuth(settings.ApiUsername, settings.ApiPassword)
+                    .PostUrlEncodedAsync(new
+                    {
+                        transact = order.TransactionInfo.TransactionId
+                    })
+                    .ReceiveString();
+
+                var responseParams = HttpUtility.ParseQueryString(response.Result);
+                var status = responseParams["status"];
+
+                var paymentStatus = PaymentStatus.Initialized;
+
+                switch (status)
+                {
+                    case "2":
+                        paymentStatus = PaymentStatus.Authorized;
+                        break;
+                    case "5":
+                        paymentStatus = PaymentStatus.Captured;
+                        break;
+                    case "6":
+                        paymentStatus = PaymentStatus.Cancelled;
+                        break;
+                    case "11":
+                        paymentStatus = PaymentStatus.Refunded;
+                        break;
+                }
+
+                return new ApiResponse(order.TransactionInfo.TransactionId, paymentStatus);
+
+            }
+            catch (Exception ex)
+            {
+                Vendr.Log.Error<DibsPaymentProvider>(ex, "Dibs - FetchPaymentStatus");
+            }
+
+            return null;
+        }
+
         public override ApiResponse CancelPayment(OrderReadOnly order, DibsSettings settings)
         {
             return new ApiResponse(order.TransactionInfo.TransactionId, PaymentStatus.Cancelled);
@@ -131,6 +174,11 @@ namespace Vendr.PaymentProviders.Dibs
         public override ApiResponse CapturePayment(OrderReadOnly order, DibsSettings settings)
         {
             return new ApiResponse(order.TransactionInfo.TransactionId, PaymentStatus.Captured);
+        }
+
+        public override ApiResponse RefundPayment(OrderReadOnly order, DibsSettings settings)
+        {
+            return base.RefundPayment(order, settings);
         }
 
         private static string GetMD5Hash(string input)
