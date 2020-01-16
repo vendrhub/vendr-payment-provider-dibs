@@ -60,18 +60,18 @@ namespace Vendr.PaymentProviders.Dibs
                 throw new Exception("Currency must a valid ISO 4217 currency code: " + currency.Name);
             }
 
-            var currencyStr = ISO4217.Codes[currency.Code.ToUpperInvariant()].ToString(CultureInfo.InvariantCulture);
+            var strCurrency = ISO4217.Codes[currency.Code.ToUpperInvariant()].ToString(CultureInfo.InvariantCulture);
             var orderAmount = (order.TotalPrice.Value.WithTax * 100M).ToString("0", CultureInfo.InvariantCulture);
 
             // MD5(key2 + MD5(key1 + "merchant=<merchant>&orderid=<orderid> &currency=<cur>&amount=<amount>"))
-            var md5Check = $"merchant={settings.MerchantId}&orderid={order.OrderNumber}&currency={currencyStr}&amount={orderAmount}";
+            var md5Check = $"merchant={settings.MerchantId}&orderid={order.OrderNumber}&currency={strCurrency}&amount={orderAmount}";
             var md5Hash = GetMD5Hash(settings.MD5Key2 + GetMD5Hash(settings.MD5Key1 + md5Check));
 
             return new PaymentForm("https://payment.architrade.com/paymentweb/start.action", FormMethod.Post)
                 .WithInput("orderid", order.OrderNumber)
                 .WithInput("merchant", settings.MerchantId)
                 .WithInput("amount", orderAmount)
-                .WithInput("currency", currencyStr)
+                .WithInput("currency", strCurrency)
                 .WithInput("accepturl", continueUrl)
                 .WithInput("cancelurl", cancelUrl)
                 .WithInput("callbackurl", callbackUrl)
@@ -168,17 +168,134 @@ namespace Vendr.PaymentProviders.Dibs
 
         public override ApiResponse CancelPayment(OrderReadOnly order, DibsSettings settings)
         {
-            return new ApiResponse(order.TransactionInfo.TransactionId, PaymentStatus.Cancelled);
+            try
+            {
+                // MD5(key2 + MD5(key1 + "merchant=<merchant>&orderid=<orderid>&transact=<transact>")) 
+                var md5Check = $"merchant={settings.MerchantId}&orderid={order.OrderNumber}&transact={order.TransactionInfo.TransactionId}";
+                
+                var response = $"https://payment.architrade.com/cgi-adm/cancel.cgi"
+                    .WithBasicAuth(settings.ApiUsername, settings.ApiPassword)
+                    .PostUrlEncodedAsync(new
+                    {
+                        merchant = settings.MerchantId,
+                        orderid = order.OrderNumber,
+                        transact = order.TransactionInfo.TransactionId,
+                        textreply = "yes",
+                        md5key = GetMD5Hash(settings.MD5Key2 + GetMD5Hash(settings.MD5Key1 + md5Check))
+                    })
+                    .ReceiveString();
+
+                var responseParams = HttpUtility.ParseQueryString(response.Result);
+                var result = responseParams["result"];
+
+                if (result == "0") // 0 == Accepted
+                {
+                    return new ApiResponse(order.TransactionInfo.TransactionId, PaymentStatus.Cancelled);
+                }
+                else
+                {
+                    Vendr.Log.Warn<DibsPaymentProvider>($"Dibs [{order.OrderNumber}] - Error making API request - error message: {result}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Vendr.Log.Error<DibsPaymentProvider>(ex, "Dibs - CancelPayment");
+            }
+
+            return null;
         }
 
         public override ApiResponse CapturePayment(OrderReadOnly order, DibsSettings settings)
         {
-            return new ApiResponse(order.TransactionInfo.TransactionId, PaymentStatus.Captured);
+            try
+            {
+                var strAmount = (order.TransactionInfo.AmountAuthorized.Value * 100M).ToString("0", CultureInfo.InvariantCulture);
+
+                // MD5(key2 + MD5(key1 + "merchant=<merchant>&orderid=<orderid>&transact=<transact>&amount=<amount>")) 
+                var md5Check = $"merchant={settings.MerchantId}&orderid={order.OrderNumber}&transact={order.TransactionInfo.TransactionId}&amount={strAmount}";
+
+                var response = $"https://payment.architrade.com/cgi-bin/capture.cgi"
+                    .PostUrlEncodedAsync(new
+                    {
+                        merchant = settings.MerchantId,
+                        orderid = order.OrderNumber,
+                        transact = order.TransactionInfo.TransactionId,
+                        amount = strAmount,
+                        textreply = "yes",
+                        md5key = GetMD5Hash(settings.MD5Key2 + GetMD5Hash(settings.MD5Key1 + md5Check))
+                    })
+                    .ReceiveString();
+
+                var responseParams = HttpUtility.ParseQueryString(response.Result);
+                var result = responseParams["result"];
+
+                if (result == "0") // 0 == Accepted
+                {
+                    return new ApiResponse(order.TransactionInfo.TransactionId, PaymentStatus.Cancelled);
+                }
+                else
+                {
+                    Vendr.Log.Warn<DibsPaymentProvider>($"Dibs [{order.OrderNumber}] - Error making API request - error message: {result}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Vendr.Log.Error<DibsPaymentProvider>(ex, "Dibs - CapturePayment");
+            }
+
+            return null;
         }
 
         public override ApiResponse RefundPayment(OrderReadOnly order, DibsSettings settings)
         {
-            return base.RefundPayment(order, settings);
+            try
+            {
+                var currency = Vendr.Services.CurrencyService.GetCurrency(order.CurrencyId);
+
+                // Ensure currency has valid ISO 4217 code
+                if (!ISO4217.Codes.ContainsKey(currency.Code.ToUpperInvariant()))
+                {
+                    throw new Exception("Currency must a valid ISO 4217 currency code: " + currency.Name);
+                }
+
+                var strCurrency = ISO4217.Codes[currency.Code.ToUpperInvariant()].ToString(CultureInfo.InvariantCulture);
+                var strAmount = (order.TransactionInfo.AmountAuthorized.Value * 100M).ToString("0", CultureInfo.InvariantCulture);
+
+                // MD5(key2 + MD5(key1 + "merchant=<merchant>&orderid=<orderid>&transact=<transact>&amount=<amount>")) 
+                var md5Check = $"merchant={settings.MerchantId}&orderid={order.OrderNumber}&transact={order.TransactionInfo.TransactionId}&amount={strAmount}";
+
+                var response = $"https://payment.architrade.com/cgi-adm/refund.cgi"
+                    .WithBasicAuth(settings.ApiUsername, settings.ApiPassword)
+                    .PostUrlEncodedAsync(new
+                    {
+                        merchant = settings.MerchantId,
+                        orderid = order.OrderNumber,
+                        transact = order.TransactionInfo.TransactionId,
+                        amount = strAmount,
+                        currency = strCurrency,
+                        textreply = "yes",
+                        md5key = GetMD5Hash(settings.MD5Key2 + GetMD5Hash(settings.MD5Key1 + md5Check))
+                    })
+                    .ReceiveString();
+
+                var responseParams = HttpUtility.ParseQueryString(response.Result);
+                var result = responseParams["result"];
+
+                if (result == "0") // 0 == Accepted
+                {
+                    return new ApiResponse(order.TransactionInfo.TransactionId, PaymentStatus.Cancelled);
+                }
+                else
+                {
+                    Vendr.Log.Warn<DibsPaymentProvider>($"Dibs [{order.OrderNumber}] - Error making API request - error message: {result}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Vendr.Log.Error<DibsPaymentProvider>(ex, "Dibs - CapturePayment");
+            }
+
+            return null;
         }
 
         private static string GetMD5Hash(string input)
