@@ -51,7 +51,7 @@ namespace Vendr.PaymentProviders.Dibs
             return settings.ContinueUrl;
         }
 
-        public override PaymentForm GenerateForm(OrderReadOnly order, string continueUrl, string cancelUrl, string callbackUrl, DibsSettings settings)
+        public override PaymentFormResult GenerateForm(OrderReadOnly order, string continueUrl, string cancelUrl, string callbackUrl, DibsSettings settings)
         {
             var currency = Vendr.Services.CurrencyService.GetCurrency(order.CurrencyId);
 
@@ -67,21 +67,24 @@ namespace Vendr.PaymentProviders.Dibs
             var md5Check = $"merchant={settings.MerchantId}&orderid={order.OrderNumber}&currency={strCurrency}&amount={orderAmount}";
             var md5Hash = GetMD5Hash(settings.MD5Key2 + GetMD5Hash(settings.MD5Key1 + md5Check));
 
-            return new PaymentForm("https://payment.architrade.com/paymentweb/start.action", FormMethod.Post)
-                .WithInput("orderid", order.OrderNumber)
-                .WithInput("merchant", settings.MerchantId)
-                .WithInput("amount", orderAmount)
-                .WithInput("currency", strCurrency)
-                .WithInput("accepturl", continueUrl)
-                .WithInput("cancelurl", cancelUrl)
-                .WithInput("callbackurl", callbackUrl)
-                .WithInputIf("capturenow", settings.Capture, "yes")
-                .WithInputIf("calcfee", settings.CalcFee, "yes")
-                .WithInputIf("test", settings.Mode == DibsMode.Test, "yes")
-                .WithInput("md5key", md5Hash);
+            return new PaymentFormResult()
+            {
+                Form = new PaymentForm("https://payment.architrade.com/paymentweb/start.action", FormMethod.Post)
+                    .WithInput("orderid", order.OrderNumber)
+                    .WithInput("merchant", settings.MerchantId)
+                    .WithInput("amount", orderAmount)
+                    .WithInput("currency", strCurrency)
+                    .WithInput("accepturl", continueUrl)
+                    .WithInput("cancelurl", cancelUrl)
+                    .WithInput("callbackurl", callbackUrl)
+                    .WithInputIf("capturenow", settings.Capture, "yes")
+                    .WithInputIf("calcfee", settings.CalcFee, "yes")
+                    .WithInputIf("test", settings.Mode == DibsMode.Test, "yes")
+                    .WithInput("md5key", md5Hash)
+            };
         }
 
-        public override CallbackResponse ProcessCallback(OrderReadOnly order, HttpRequestBase request, DibsSettings settings)
+        public override CallbackResult ProcessCallback(OrderReadOnly order, HttpRequestBase request, DibsSettings settings)
         {
             try
             {
@@ -99,7 +102,7 @@ namespace Vendr.PaymentProviders.Dibs
                 // authkey = MD5(key2 + MD5(key1 + "transact=<transact>&amount=<amount>&currency=<currency>"))
                 if (GetMD5Hash(settings.MD5Key2 + GetMD5Hash(settings.MD5Key1 + md5Check)) == authkey)
                 {
-                    return new CallbackResponse
+                    return new CallbackResult
                     {
                         TransactionInfo = new TransactionInfo
                         {
@@ -119,10 +122,10 @@ namespace Vendr.PaymentProviders.Dibs
                 Vendr.Log.Error<DibsPaymentProvider>(ex, "Dibs - ProcessCallback");
             }
 
-            return CallbackResponse.Empty;
+            return CallbackResult.Empty;
         }
 
-        public override ApiResponse FetchPaymentStatus(OrderReadOnly order, DibsSettings settings)
+        public override ApiResult FetchPaymentStatus(OrderReadOnly order, DibsSettings settings)
         {
             try
             {
@@ -155,7 +158,14 @@ namespace Vendr.PaymentProviders.Dibs
                         break;
                 }
 
-                return new ApiResponse(order.TransactionInfo.TransactionId, paymentStatus);
+                return new ApiResult()
+                {
+                    TransactionInfo = new TransactionInfoUpdate()
+                    {
+                        TransactionId = order.TransactionInfo.TransactionId,
+                        PaymentStatus = paymentStatus
+                    }
+                };
 
             }
             catch (Exception ex)
@@ -163,10 +173,10 @@ namespace Vendr.PaymentProviders.Dibs
                 Vendr.Log.Error<DibsPaymentProvider>(ex, "Dibs - FetchPaymentStatus");
             }
 
-            return null;
+            return ApiResult.Empty;
         }
 
-        public override ApiResponse CancelPayment(OrderReadOnly order, DibsSettings settings)
+        public override ApiResult CancelPayment(OrderReadOnly order, DibsSettings settings)
         {
             try
             {
@@ -190,7 +200,14 @@ namespace Vendr.PaymentProviders.Dibs
 
                 if (result == "0") // 0 == Accepted
                 {
-                    return new ApiResponse(order.TransactionInfo.TransactionId, PaymentStatus.Cancelled);
+                    return new ApiResult()
+                    {
+                        TransactionInfo = new TransactionInfoUpdate()
+                        {
+                            TransactionId = order.TransactionInfo.TransactionId,
+                            PaymentStatus = PaymentStatus.Captured
+                        }
+                    };
                 }
                 else
                 {
@@ -202,10 +219,10 @@ namespace Vendr.PaymentProviders.Dibs
                 Vendr.Log.Error<DibsPaymentProvider>(ex, "Dibs - CancelPayment");
             }
 
-            return null;
+            return ApiResult.Empty;
         }
 
-        public override ApiResponse CapturePayment(OrderReadOnly order, DibsSettings settings)
+        public override ApiResult CapturePayment(OrderReadOnly order, DibsSettings settings)
         {
             try
             {
@@ -231,7 +248,14 @@ namespace Vendr.PaymentProviders.Dibs
 
                 if (result == "0") // 0 == Accepted
                 {
-                    return new ApiResponse(order.TransactionInfo.TransactionId, PaymentStatus.Cancelled);
+                    return new ApiResult()
+                    {
+                        TransactionInfo = new TransactionInfoUpdate()
+                        {
+                            TransactionId = order.TransactionInfo.TransactionId,
+                            PaymentStatus = PaymentStatus.Captured
+                        }
+                    };
                 }
                 else
                 {
@@ -243,10 +267,10 @@ namespace Vendr.PaymentProviders.Dibs
                 Vendr.Log.Error<DibsPaymentProvider>(ex, "Dibs - CapturePayment");
             }
 
-            return null;
+            return ApiResult.Empty;
         }
 
-        public override ApiResponse RefundPayment(OrderReadOnly order, DibsSettings settings)
+        public override ApiResult RefundPayment(OrderReadOnly order, DibsSettings settings)
         {
             try
             {
@@ -283,7 +307,14 @@ namespace Vendr.PaymentProviders.Dibs
 
                 if (result == "0") // 0 == Accepted
                 {
-                    return new ApiResponse(order.TransactionInfo.TransactionId, PaymentStatus.Cancelled);
+                    return new ApiResult()
+                    {
+                        TransactionInfo = new TransactionInfoUpdate()
+                        {
+                            TransactionId = order.TransactionInfo.TransactionId,
+                            PaymentStatus = PaymentStatus.Refunded
+                        }
+                    };
                 }
                 else
                 {
@@ -295,7 +326,7 @@ namespace Vendr.PaymentProviders.Dibs
                 Vendr.Log.Error<DibsPaymentProvider>(ex, "Dibs - CapturePayment");
             }
 
-            return null;
+            return ApiResult.Empty;
         }
 
         private static string GetMD5Hash(string input)
