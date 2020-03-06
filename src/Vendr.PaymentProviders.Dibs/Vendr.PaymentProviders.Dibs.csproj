@@ -89,7 +89,6 @@
   <ItemGroup>
     <Compile Include="DibsLang.cs" />
     <Compile Include="DibsPaymentProvider.cs" />
-    <Compile Include="DibsMode.cs" />
     <Compile Include="DibsSettings.cs" />
     <Compile Include="ISO4217.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
