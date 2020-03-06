@@ -83,7 +83,7 @@ namespace Vendr.PaymentProviders.Dibs
                     .WithInput("accepturl", continueUrl)
                     .WithInput("cancelurl", cancelUrl)
                     .WithInput("callbackurl", callbackUrl)
-                    .WithInputIf("paytype", payTypes.Length > 0, string.Join(",", payTypes))
+                    .WithInputIf("paytype", payTypes?.Length > 0, string.Join(",", payTypes))
                     .WithInputIf("capturenow", settings.Capture, "yes")
                     .WithInputIf("calcfee", settings.CalcFee, "yes")
                     .WithInputIf("test", settings.Mode == DibsMode.Test, "yes")
