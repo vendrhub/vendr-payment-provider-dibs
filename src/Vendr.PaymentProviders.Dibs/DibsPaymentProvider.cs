@@ -67,6 +67,9 @@ namespace Vendr.PaymentProviders.Dibs
             var md5Check = $"merchant={settings.MerchantId}&orderid={order.OrderNumber}&currency={strCurrency}&amount={orderAmount}";
             var md5Hash = GetMD5Hash(settings.MD5Key2 + GetMD5Hash(settings.MD5Key1 + md5Check));
 
+            // Parse language - default language is Danish.
+            Enum.TryParse(settings.Lang, true, out DibsLang lang);
+
             return new PaymentFormResult()
             {
                 Form = new PaymentForm("https://payment.architrade.com/paymentweb/start.action", FormMethod.Post)
@@ -77,6 +80,7 @@ namespace Vendr.PaymentProviders.Dibs
                     .WithInput("accepturl", continueUrl)
                     .WithInput("cancelurl", cancelUrl)
                     .WithInput("callbackurl", callbackUrl)
+                    .WithInput("lang", lang.ToString())
                     .WithInputIf("capturenow", settings.Capture, "yes")
                     .WithInputIf("calcfee", settings.CalcFee, "yes")
                     .WithInputIf("test", settings.Mode == DibsMode.Test, "yes")
