@@ -79,6 +79,7 @@ namespace Vendr.PaymentProviders.Dibs
                     .WithInput("callbackurl", callbackUrl)
                     .WithInputIf("capturenow", settings.Capture, "yes")
                     .WithInputIf("calcfee", settings.CalcFee, "yes")
+                    .WithInputIf("decorator", !string.IsNullOrWhiteSpace(settings.Decorator), settings.Decorator)
                     .WithInputIf("test", settings.Mode == DibsMode.Test, "yes")
                     .WithInput("md5key", md5Hash)
             };
