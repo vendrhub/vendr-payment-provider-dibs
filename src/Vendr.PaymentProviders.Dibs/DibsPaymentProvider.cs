@@ -64,13 +64,16 @@ namespace Vendr.PaymentProviders.Dibs
             var orderAmount = (order.TotalPrice.Value.WithTax * 100M).ToString("0", CultureInfo.InvariantCulture);
 
             var payTypes = settings.PayTypes?.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
-                                             .Where(x => !string.IsNullOrWhiteSpace(x))
-                                             .Select(s => s.Trim())
-                                             .ToArray();
+                   .Where(x => !string.IsNullOrWhiteSpace(x))
+                   .Select(s => s.Trim())
+                   .ToArray();
 
             // MD5(key2 + MD5(key1 + "merchant=<merchant>&orderid=<orderid> &currency=<cur>&amount=<amount>"))
             var md5Check = $"merchant={settings.MerchantId}&orderid={order.OrderNumber}&currency={strCurrency}&amount={orderAmount}";
             var md5Hash = GetMD5Hash(settings.MD5Key2 + GetMD5Hash(settings.MD5Key1 + md5Check));
+
+            // Parse language - default language is Danish.
+            Enum.TryParse(settings.Lang, true, out DibsLang lang);
 
             return new PaymentFormResult()
             {
@@ -82,6 +85,7 @@ namespace Vendr.PaymentProviders.Dibs
                     .WithInput("accepturl", continueUrl)
                     .WithInput("cancelurl", cancelUrl)
                     .WithInput("callbackurl", callbackUrl)
+                    .WithInput("lang", lang.ToString())
                     .WithInputIf("paytype", payTypes?.Length > 0, string.Join(",", payTypes))
                     .WithInputIf("capturenow", settings.Capture, "yes")
                     .WithInputIf("calcfee", settings.CalcFee, "yes")
