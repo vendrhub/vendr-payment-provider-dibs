@@ -4,7 +4,6 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Web;
 using System.Web.Mvc;
-using Flurl;
 using Flurl.Http;
 using Vendr.Core;
 using Vendr.Core.Models;
@@ -56,11 +55,11 @@ namespace Vendr.PaymentProviders.Dibs
             var currency = Vendr.Services.CurrencyService.GetCurrency(order.CurrencyId);
 
             // Ensure currency has valid ISO 4217 code
-            if (!ISO4217.Codes.ContainsKey(currency.Code.ToUpperInvariant())) {
+            if (!Iso4217.CurrencyCodes.ContainsKey(currency.Code.ToUpperInvariant())) {
                 throw new Exception("Currency must a valid ISO 4217 currency code: " + currency.Name);
             }
 
-            var strCurrency = ISO4217.Codes[currency.Code.ToUpperInvariant()].ToString(CultureInfo.InvariantCulture);
+            var strCurrency = Iso4217.CurrencyCodes[currency.Code.ToUpperInvariant()].ToString(CultureInfo.InvariantCulture);
             var orderAmount = (order.TotalPrice.Value.WithTax * 100M).ToString("0", CultureInfo.InvariantCulture);
 
             // MD5(key2 + MD5(key1 + "merchant=<merchant>&orderid=<orderid> &currency=<cur>&amount=<amount>"))
@@ -277,12 +276,12 @@ namespace Vendr.PaymentProviders.Dibs
                 var currency = Vendr.Services.CurrencyService.GetCurrency(order.CurrencyId);
 
                 // Ensure currency has valid ISO 4217 code
-                if (!ISO4217.Codes.ContainsKey(currency.Code.ToUpperInvariant()))
+                if (!Iso4217.CurrencyCodes.ContainsKey(currency.Code.ToUpperInvariant()))
                 {
                     throw new Exception("Currency must a valid ISO 4217 currency code: " + currency.Name);
                 }
 
-                var strCurrency = ISO4217.Codes[currency.Code.ToUpperInvariant()].ToString(CultureInfo.InvariantCulture);
+                var strCurrency = Iso4217.CurrencyCodes[currency.Code.ToUpperInvariant()].ToString(CultureInfo.InvariantCulture);
                 var strAmount = (order.TransactionInfo.AmountAuthorized.Value * 100M).ToString("0", CultureInfo.InvariantCulture);
 
                 // MD5(key2 + MD5(key1 + "merchant=<merchant>&orderid=<orderid>&transact=<transact>&amount=<amount>")) 
