@@ -201,7 +201,7 @@ namespace Vendr.PaymentProviders.Dibs
                         merchant = settings.MerchantId,
                         orderid = order.OrderNumber,
                         transact = order.TransactionInfo.TransactionId,
-                        textreply = "yes",
+                        textreply = "1",
                         md5key = GetMD5Hash(settings.MD5Key2 + GetMD5Hash(settings.MD5Key1 + md5Check))
                     })
                     .ReceiveString();
@@ -249,7 +249,7 @@ namespace Vendr.PaymentProviders.Dibs
                         orderid = order.OrderNumber,
                         transact = order.TransactionInfo.TransactionId,
                         amount = strAmount,
-                        textreply = "yes",
+                        textreply = "1",
                         md5key = GetMD5Hash(settings.MD5Key2 + GetMD5Hash(settings.MD5Key1 + md5Check))
                     })
                     .ReceiveString();
@@ -308,7 +308,7 @@ namespace Vendr.PaymentProviders.Dibs
                         transact = order.TransactionInfo.TransactionId,
                         amount = strAmount,
                         currency = strCurrency,
-                        textreply = "yes",
+                        textreply = "1",
                         md5key = GetMD5Hash(settings.MD5Key2 + GetMD5Hash(settings.MD5Key1 + md5Check))
                     })
                     .ReceiveString();
