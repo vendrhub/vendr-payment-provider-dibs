@@ -89,6 +89,7 @@ namespace Vendr.PaymentProviders.Dibs
                     .WithInputIf("paytype", payTypes?.Length > 0, string.Join(",", payTypes))
                     .WithInputIf("capturenow", settings.Capture, "yes")
                     .WithInputIf("calcfee", settings.CalcFee, "yes")
+                    .WithInputIf("decorator", !string.IsNullOrWhiteSpace(settings.Decorator), settings.Decorator)
                     .WithInputIf("test", settings.TestMode, "1")
                     .WithInput("md5key", md5Hash)
             };
