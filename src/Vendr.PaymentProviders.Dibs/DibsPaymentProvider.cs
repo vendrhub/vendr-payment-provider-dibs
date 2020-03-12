@@ -1,10 +1,10 @@
 using System;
 using System.Globalization;
+using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Web;
 using System.Web.Mvc;
-using Flurl;
 using Flurl.Http;
 using Vendr.Core;
 using Vendr.Core.Models;
@@ -56,12 +56,17 @@ namespace Vendr.PaymentProviders.Dibs
             var currency = Vendr.Services.CurrencyService.GetCurrency(order.CurrencyId);
 
             // Ensure currency has valid ISO 4217 code
-            if (!ISO4217.Codes.ContainsKey(currency.Code.ToUpperInvariant())) {
+            if (!Iso4217.CurrencyCodes.ContainsKey(currency.Code.ToUpperInvariant())) {
                 throw new Exception("Currency must a valid ISO 4217 currency code: " + currency.Name);
             }
 
-            var strCurrency = ISO4217.Codes[currency.Code.ToUpperInvariant()].ToString(CultureInfo.InvariantCulture);
+            var strCurrency = Iso4217.CurrencyCodes[currency.Code.ToUpperInvariant()].ToString(CultureInfo.InvariantCulture);
             var orderAmount = (order.TotalPrice.Value.WithTax * 100M).ToString("0", CultureInfo.InvariantCulture);
+
+            var payTypes = settings.PayTypes?.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
+                   .Where(x => !string.IsNullOrWhiteSpace(x))
+                   .Select(s => s.Trim())
+                   .ToArray();
 
             // MD5(key2 + MD5(key1 + "merchant=<merchant>&orderid=<orderid> &currency=<cur>&amount=<amount>"))
             var md5Check = $"merchant={settings.MerchantId}&orderid={order.OrderNumber}&currency={strCurrency}&amount={orderAmount}";
@@ -81,9 +86,10 @@ namespace Vendr.PaymentProviders.Dibs
                     .WithInput("cancelurl", cancelUrl)
                     .WithInput("callbackurl", callbackUrl)
                     .WithInput("lang", lang.ToString())
+                    .WithInputIf("paytype", payTypes?.Length > 0, string.Join(",", payTypes))
                     .WithInputIf("capturenow", settings.Capture, "yes")
                     .WithInputIf("calcfee", settings.CalcFee, "yes")
-                    .WithInputIf("test", settings.Mode == DibsMode.Test, "yes")
+                    .WithInputIf("test", settings.TestMode, "1")
                     .WithInput("md5key", md5Hash)
             };
         }
@@ -281,12 +287,12 @@ namespace Vendr.PaymentProviders.Dibs
                 var currency = Vendr.Services.CurrencyService.GetCurrency(order.CurrencyId);
 
                 // Ensure currency has valid ISO 4217 code
-                if (!ISO4217.Codes.ContainsKey(currency.Code.ToUpperInvariant()))
+                if (!Iso4217.CurrencyCodes.ContainsKey(currency.Code.ToUpperInvariant()))
                 {
                     throw new Exception("Currency must a valid ISO 4217 currency code: " + currency.Name);
                 }
 
-                var strCurrency = ISO4217.Codes[currency.Code.ToUpperInvariant()].ToString(CultureInfo.InvariantCulture);
+                var strCurrency = Iso4217.CurrencyCodes[currency.Code.ToUpperInvariant()].ToString(CultureInfo.InvariantCulture);
                 var strAmount = (order.TransactionInfo.AmountAuthorized.Value * 100M).ToString("0", CultureInfo.InvariantCulture);
 
                 // MD5(key2 + MD5(key1 + "merchant=<merchant>&orderid=<orderid>&transact=<transact>&amount=<amount>")) 
