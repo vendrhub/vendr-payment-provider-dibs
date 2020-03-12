@@ -86,7 +86,7 @@ namespace Vendr.PaymentProviders.Dibs
                     .WithInput("cancelurl", cancelUrl)
                     .WithInput("callbackurl", callbackUrl)
                     .WithInput("lang", lang.ToString())
-                    .WithInputIf("paytype", payTypes?.Length > 0, string.Join(",", payTypes))
+                    .WithInputIf("paytype", payTypes != null && payTypes.Length > 0, string.Join(",", payTypes))
                     .WithInputIf("capturenow", settings.Capture, "1")
                     .WithInputIf("calcfee", settings.CalcFee, "1")
                     .WithInputIf("decorator", !string.IsNullOrWhiteSpace(settings.Decorator), settings.Decorator)
