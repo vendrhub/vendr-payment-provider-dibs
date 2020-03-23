@@ -70,7 +70,7 @@ namespace Vendr.PaymentProviders.Dibs
 
             // MD5(key2 + MD5(key1 + "merchant=<merchant>&orderid=<orderid> &currency=<cur>&amount=<amount>"))
             var md5Check = $"merchant={settings.MerchantId}&orderid={order.OrderNumber}&currency={strCurrency}&amount={orderAmount}";
-            var md5Hash = GetMD5Hash(settings.MD5Key2 + GetMD5Hash(settings.MD5Key1 + md5Check));
+            var md5Hash = MD5Hash(settings.MD5Key2 + MD5Hash(settings.MD5Key1 + md5Check));
 
             // Parse language - default language is Danish.
             Enum.TryParse(settings.Lang, true, out DibsLang lang);
@@ -111,7 +111,7 @@ namespace Vendr.PaymentProviders.Dibs
                 var md5Check = $"transact={transaction}&amount={totalAmount.ToString("0", CultureInfo.InvariantCulture)}&currency={currencyCode}";
 
                 // authkey = MD5(key2 + MD5(key1 + "transact=<transact>&amount=<amount>&currency=<currency>"))
-                if (GetMD5Hash(settings.MD5Key2 + GetMD5Hash(settings.MD5Key1 + md5Check)) == authkey)
+                if (MD5Hash(settings.MD5Key2 + MD5Hash(settings.MD5Key1 + md5Check)) == authkey)
                 {
                     return new CallbackResult
                     {
@@ -202,7 +202,7 @@ namespace Vendr.PaymentProviders.Dibs
                         orderid = order.OrderNumber,
                         transact = order.TransactionInfo.TransactionId,
                         textreply = "1",
-                        md5key = GetMD5Hash(settings.MD5Key2 + GetMD5Hash(settings.MD5Key1 + md5Check))
+                        md5key = MD5Hash(settings.MD5Key2 + MD5Hash(settings.MD5Key1 + md5Check))
                     })
                     .ReceiveString();
 
@@ -250,7 +250,7 @@ namespace Vendr.PaymentProviders.Dibs
                         transact = order.TransactionInfo.TransactionId,
                         amount = strAmount,
                         textreply = "1",
-                        md5key = GetMD5Hash(settings.MD5Key2 + GetMD5Hash(settings.MD5Key1 + md5Check))
+                        md5key = MD5Hash(settings.MD5Key2 + MD5Hash(settings.MD5Key1 + md5Check))
                     })
                     .ReceiveString();
 
@@ -309,7 +309,7 @@ namespace Vendr.PaymentProviders.Dibs
                         amount = strAmount,
                         currency = strCurrency,
                         textreply = "1",
-                        md5key = GetMD5Hash(settings.MD5Key2 + GetMD5Hash(settings.MD5Key1 + md5Check))
+                        md5key = MD5Hash(settings.MD5Key2 + MD5Hash(settings.MD5Key1 + md5Check))
                     })
                     .ReceiveString();
 
@@ -338,23 +338,6 @@ namespace Vendr.PaymentProviders.Dibs
             }
 
             return ApiResult.Empty;
-        }
-
-        private static string GetMD5Hash(string input)
-        {
-            var hash = new StringBuilder();
-
-            using (var md5provider = new MD5CryptoServiceProvider())
-            {
-                var bytes = md5provider.ComputeHash(new UTF8Encoding().GetBytes(input));
-
-                for (var i = 0; i < bytes.Length; i++)
-                {
-                    hash.Append(bytes[i].ToString("x2"));
-                }
-            }
-
-            return hash.ToString();
         }
     }
 }
