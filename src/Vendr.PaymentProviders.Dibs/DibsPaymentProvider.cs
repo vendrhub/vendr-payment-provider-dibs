@@ -216,7 +216,7 @@ namespace Vendr.PaymentProviders.Dibs
                         TransactionInfo = new TransactionInfoUpdate()
                         {
                             TransactionId = order.TransactionInfo.TransactionId,
-                            PaymentStatus = PaymentStatus.Captured
+                            PaymentStatus = PaymentStatus.Cancelled
                         }
                     };
                 }
