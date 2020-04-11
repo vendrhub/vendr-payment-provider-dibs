@@ -287,14 +287,15 @@ namespace Vendr.PaymentProviders.Dibs
             try
             {
                 var currency = Vendr.Services.CurrencyService.GetCurrency(order.CurrencyId);
+                var currencyCode = currency.Code.ToUpperInvariant();
 
                 // Ensure currency has valid ISO 4217 code
-                if (!Iso4217.CurrencyCodes.ContainsKey(currency.Code.ToUpperInvariant()))
+                if (!Iso4217.CurrencyCodes.ContainsKey(currencyCode))
                 {
-                    throw new Exception("Currency must a valid ISO 4217 currency code: " + currency.Name);
+                    throw new Exception("Currency must be a valid ISO 4217 currency code: " + currency.Name);
                 }
 
-                var strCurrency = Iso4217.CurrencyCodes[currency.Code.ToUpperInvariant()].ToString(CultureInfo.InvariantCulture);
+                var strCurrency = Iso4217.CurrencyCodes[currencyCode].ToString(CultureInfo.InvariantCulture);
                 var strAmount = (order.TransactionInfo.AmountAuthorized.Value * 100M).ToString("0", CultureInfo.InvariantCulture);
 
                 // MD5(key2 + MD5(key1 + "merchant=<merchant>&orderid=<orderid>&transact=<transact>&amount=<amount>")) 
