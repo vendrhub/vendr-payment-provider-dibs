@@ -87,6 +87,10 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Easy\Api\DibsEasyClient.cs" />
+    <Compile Include="Easy\Api\Models\DibsEasyClientConfig.cs" />
+    <Compile Include="Easy\Api\Models\DibsPayment.cs" />
+    <Compile Include="Easy\Api\Models\DibsPaymentResult.cs" />
     <Compile Include="DibsLang.cs" />
     <Compile Include="DibsPaymentProvider.cs" />
     <Compile Include="DibsSettings.cs" />
@@ -97,5 +101,6 @@
     <None Include="app.config" />
     <None Include="packages.config" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
