@@ -14,7 +14,7 @@ using Vendr.Core.Web.PaymentProviders;
 namespace Vendr.PaymentProviders.Dibs
 {
     [PaymentProvider("dibs-d2", "DIBS D2", "DIBS D2 payment provider for one time payments")]
-    public class DibsPaymentProvider : PaymentProviderBase<DibsSettings>
+    public class DibsPaymentProvider : DibsPaymentProviderBase<DibsSettings>
     {
         public DibsPaymentProvider(VendrContext vendr)
             : base(vendr)
@@ -26,30 +26,6 @@ namespace Vendr.PaymentProviders.Dibs
         public override bool CanFetchPaymentStatus => true;
 
         public override bool FinalizeAtContinueUrl => false;
-
-        public override string GetCancelUrl(OrderReadOnly order, DibsSettings settings)
-        {
-            settings.MustNotBeNull("settings");
-            settings.CancelUrl.MustNotBeNull("settings.CancelUrl");
-
-            return settings.CancelUrl;
-        }
-
-        public override string GetErrorUrl(OrderReadOnly order, DibsSettings settings)
-        {
-            settings.MustNotBeNull("settings");
-            settings.ErrorUrl.MustNotBeNull("settings.ErrorUrl");
-
-            return settings.ErrorUrl;
-        }
-
-        public override string GetContinueUrl(OrderReadOnly order, DibsSettings settings)
-        {
-            settings.MustNotBeNull("settings");
-            settings.ContinueUrl.MustNotBeNull("settings.ContinueUrl");
-
-            return settings.ContinueUrl;
-        }
 
         public override PaymentFormResult GenerateForm(OrderReadOnly order, string continueUrl, string cancelUrl, string callbackUrl, DibsSettings settings)
         {
