@@ -33,19 +33,19 @@ namespace Vendr.Contrib.PaymentProviders
             new TransactionMetaDataDefinition("dibsEasyPaymentId", "Dibs (Easy) Payment ID")
         };
 
-        //public override OrderReference GetOrderReference(HttpRequestBase request, DibsEasyOneTimeSettings settings)
-        //{
-        //    try
-        //    {
-                
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        Vendr.Log.Error<DibsEasyOneTimePaymentProvider>(ex, "Dibs Easy - GetOrderReference");
-        //    }
+        public override OrderReference GetOrderReference(HttpRequestBase request, DibsEasyOneTimeSettings settings)
+        {
+            try
+            {
 
-        //    return base.GetOrderReference(request, settings);
-        //}
+            }
+            catch (Exception ex)
+            {
+                Vendr.Log.Error<DibsEasyOneTimePaymentProvider>(ex, "Dibs Easy - GetOrderReference");
+            }
+
+            return base.GetOrderReference(request, settings);
+        }
 
         public override PaymentFormResult GenerateForm(OrderReadOnly order, string continueUrl, string cancelUrl, string callbackUrl, DibsEasyOneTimeSettings settings)
         {
@@ -58,7 +58,7 @@ namespace Vendr.Contrib.PaymentProviders
                 throw new Exception("Currency must be a valid ISO 4217 currency code: " + currency.Name);
             }
 
-            var orderAmount = AmountToMinorUnits(order.TotalPrice.Value.WithTax).ToString("0", CultureInfo.InvariantCulture);
+            var orderAmount = AmountToMinorUnits(order.TotalPrice.Value.WithTax);
 
             var paymentMethods = settings.PaymentMethods?.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
                    .Where(x => !string.IsNullOrWhiteSpace(x))
@@ -73,13 +73,58 @@ namespace Vendr.Contrib.PaymentProviders
                 var clientConfig = GetDibsEasyClientConfig(settings);
                 var client = new DibsEasyClient(clientConfig);
 
-                var data = new { };
+                var items = order.OrderLines.Select(x => new
+                {
+                    reference = x.Sku,
+                    name = x.Name,
+                    quantity = (int)x.Quantity,
+                    unit = "pcs",
+                    unitPrice = AmountToMinorUnits(x.UnitPrice.Value.WithoutTax),
+                    taxRate = AmountToMinorUnits(x.TaxRate.Value * 100),
+                    grossTotalAmount = AmountToMinorUnits(x.TotalPrice.Value.WithTax),
+                    netTotalAmount = AmountToMinorUnits(x.TotalPrice.Value.WithoutTax)
+                });
+
+                var data = new
+                {
+                    order = new
+                    {
+                        items = items,
+                        amount =  orderAmount,
+                        currency = currencyCode,
+                        reference = order.OrderNumber
+                    },
+                    checkout = new
+                    {
+                        charge = false,
+                        integrationType = "HostedPaymentPage",
+                        returnUrl = continueUrl,
+                        termsUrl = "https://www.mydomain.com/toc"
+                    }
+                };
 
                 // Create payment
                 var payment = client.CreatePayment(data);
 
                 // Get payment id
                 paymentId = payment.PaymentId;
+
+                var paymentDetails = client.GetPaymentDetails(paymentId);
+
+                if (paymentDetails != null)
+                {
+                    var uriBuilder = new UriBuilder(paymentDetails.Payment.Checkout.Url);
+                    var query = HttpUtility.ParseQueryString(uriBuilder.Query);
+
+                    //if (!string.IsNullOrEmpty(settings.Language))
+                    //{
+                    //    query["language"] = settings.Language;
+                    //}
+                    query["language"] = "da-DK";
+
+                    uriBuilder.Query = query.ToString();
+                    paymentFormLink = uriBuilder.ToString();
+                }
             }
             catch (Exception ex)
             {
@@ -94,20 +139,25 @@ namespace Vendr.Contrib.PaymentProviders
                 {
                     { "dibsEasyPaymentId", paymentId }
                 },
-                Form = new PaymentForm(continueUrl, FormMethod.Get)
-                            .WithJsFile($"https://{(settings.TestMode ? "test." : "")}checkout.dibspayment.eu/v1/checkout.js?v=1")
-                            .WithJs(@"
-                                var checkoutOptions = {
-                                    checkoutKey: '" + checkoutKey + @"',
-                                    paymentId : '" + paymentId + @"',
-                                    partnerMerchantNumber: '" + settings.MerchantId + @"',
-                                    containerId: 'dibs-complete-checkout',
-                                    language: 'en-GB'
-                                };
+                Form = new PaymentForm(paymentFormLink, FormMethod.Get)
+                            //.WithJsFile($"https://{(settings.TestMode ? "test." : "")}checkout.dibspayment.eu/v1/checkout.js?v=1")
+                            //.WithJs(@"
+                            //    var elem = document.createElement('div');
+                            //    elem.id = 'dibs-complete-content';
+                            //    document.body.appendChild(elem);
+        
+                            //    var checkoutOptions = {
+                            //        checkoutKey: '" + checkoutKey + @"',
+                            //        paymentId : '" + paymentId + @"',
+                            //        language: 'en-GB',
+                            //        theme: {
+                            //            textColor: 'blue'
+                            //        }
+                            //    };
                                 
-                                var checkout = new Dibs.Checkout(checkoutOptions);
-                            ")
-                };
+                            //    var checkout = new Dibs.Checkout(checkoutOptions);
+                            //")
+            };
         }
 
         public override CallbackResult ProcessCallback(OrderReadOnly order, HttpRequestBase request, DibsEasyOneTimeSettings settings)

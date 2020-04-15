@@ -25,10 +25,10 @@ namespace Vendr.Contrib.PaymentProviders.Reepay.Api
                 .ReceiveJson<DibsPaymentResult>());
         }
 
-        public DibsPayment GetPayment(string paymentId)
+        public DibsPaymentDetails GetPaymentDetails(string paymentId)
         {
             return Request($"/v1/payments/{paymentId}", (req) => req
-                .GetJsonAsync<DibsPayment>());
+                .GetJsonAsync<DibsPaymentDetails>());
         }
 
         public string CancelPayment(string paymentId)
