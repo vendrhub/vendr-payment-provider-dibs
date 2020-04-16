@@ -94,6 +94,11 @@ namespace Vendr.Contrib.PaymentProviders
                         currency = currencyCode,
                         reference = order.OrderNumber
                     },
+                    consumer = new
+                    {
+                        reference = order.CustomerInfo.CustomerReference,
+                        email = order.CustomerInfo.Email
+                    },
                     checkout = new
                     {
                         charge = false,
