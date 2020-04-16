@@ -99,7 +99,8 @@ namespace Vendr.Contrib.PaymentProviders
                         charge = false,
                         integrationType = "HostedPaymentPage",
                         returnUrl = continueUrl,
-                        termsUrl = "https://www.mydomain.com/toc"
+                        termsUrl = "https://www.mydomain.com/toc",
+                        merchantHandlesConsumerData = true
                     }
                 };
 
