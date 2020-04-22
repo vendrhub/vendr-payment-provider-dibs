@@ -61,8 +61,8 @@ namespace Vendr.PaymentProviders.Dibs
                 throw new Exception("Currency must be a valid ISO 4217 currency code: " + currency.Name);
             }
 
-            var strCurrency = Iso4217.CurrencyCodes[currencyCode].ToString(CultureInfo.InvariantCulture);
-            var orderAmount = (order.TotalPrice.Value.WithTax * 100M).ToString("0", CultureInfo.InvariantCulture);
+            var strCurrency = Iso4217.CurrencyCodes[currency.Code.ToUpperInvariant()].ToString(CultureInfo.InvariantCulture);
+            var orderAmount = AmountToMinorUnits(order.TotalPrice.Value.WithTax).ToString("0", CultureInfo.InvariantCulture);
 
             var payTypes = settings.PayTypes?.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
                    .Where(x => !string.IsNullOrWhiteSpace(x))
@@ -118,7 +118,7 @@ namespace Vendr.PaymentProviders.Dibs
                     {
                         TransactionInfo = new TransactionInfo
                         {
-                            AmountAuthorized = totalAmount / 100M,
+                            AmountAuthorized = AmountFromMinorUnits((long)totalAmount),
                             TransactionId = transaction,
                             PaymentStatus = !captured ? PaymentStatus.Authorized : PaymentStatus.Captured
                         }
@@ -238,7 +238,7 @@ namespace Vendr.PaymentProviders.Dibs
         {
             try
             {
-                var strAmount = (order.TransactionInfo.AmountAuthorized.Value * 100M).ToString("0", CultureInfo.InvariantCulture);
+                var strAmount = AmountToMinorUnits(order.TransactionInfo.AmountAuthorized.Value).ToString("0", CultureInfo.InvariantCulture);
 
                 // MD5(key2 + MD5(key1 + "merchant=<merchant>&orderid=<orderid>&transact=<transact>&amount=<amount>")) 
                 var md5Check = $"merchant={settings.MerchantId}&orderid={order.OrderNumber}&transact={order.TransactionInfo.TransactionId}&amount={strAmount}";
@@ -295,8 +295,8 @@ namespace Vendr.PaymentProviders.Dibs
                     throw new Exception("Currency must be a valid ISO 4217 currency code: " + currency.Name);
                 }
 
-                var strCurrency = Iso4217.CurrencyCodes[currencyCode].ToString(CultureInfo.InvariantCulture);
-                var strAmount = (order.TransactionInfo.AmountAuthorized.Value * 100M).ToString("0", CultureInfo.InvariantCulture);
+                var strCurrency = Iso4217.CurrencyCodes[currency.Code.ToUpperInvariant()].ToString(CultureInfo.InvariantCulture);
+                var strAmount = AmountToMinorUnits(order.TransactionInfo.AmountAuthorized.Value).ToString("0", CultureInfo.InvariantCulture);
 
                 // MD5(key2 + MD5(key1 + "merchant=<merchant>&orderid=<orderid>&transact=<transact>&amount=<amount>")) 
                 var md5Check = $"merchant={settings.MerchantId}&orderid={order.OrderNumber}&transact={order.TransactionInfo.TransactionId}&amount={strAmount}";
