@@ -54,10 +54,11 @@ namespace Vendr.PaymentProviders.Dibs
         public override PaymentFormResult GenerateForm(OrderReadOnly order, string continueUrl, string cancelUrl, string callbackUrl, DibsSettings settings)
         {
             var currency = Vendr.Services.CurrencyService.GetCurrency(order.CurrencyId);
+            var currencyCode = currency.Code.ToUpperInvariant();
 
             // Ensure currency has valid ISO 4217 code
-            if (!Iso4217.CurrencyCodes.ContainsKey(currency.Code.ToUpperInvariant())) {
-                throw new Exception("Currency must a valid ISO 4217 currency code: " + currency.Name);
+            if (!Iso4217.CurrencyCodes.ContainsKey(currencyCode)) {
+                throw new Exception("Currency must be a valid ISO 4217 currency code: " + currency.Name);
             }
 
             var strCurrency = Iso4217.CurrencyCodes[currency.Code.ToUpperInvariant()].ToString(CultureInfo.InvariantCulture);
@@ -286,11 +287,12 @@ namespace Vendr.PaymentProviders.Dibs
             try
             {
                 var currency = Vendr.Services.CurrencyService.GetCurrency(order.CurrencyId);
+                var currencyCode = currency.Code.ToUpperInvariant();
 
                 // Ensure currency has valid ISO 4217 code
-                if (!Iso4217.CurrencyCodes.ContainsKey(currency.Code.ToUpperInvariant()))
+                if (!Iso4217.CurrencyCodes.ContainsKey(currencyCode))
                 {
-                    throw new Exception("Currency must a valid ISO 4217 currency code: " + currency.Name);
+                    throw new Exception("Currency must be a valid ISO 4217 currency code: " + currency.Name);
                 }
 
                 var strCurrency = Iso4217.CurrencyCodes[currency.Code.ToUpperInvariant()].ToString(CultureInfo.InvariantCulture);
