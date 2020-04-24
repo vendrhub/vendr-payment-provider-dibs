@@ -1,8 +1,6 @@
 using System;
 using System.Globalization;
 using System.Linq;
-using System.Security.Cryptography;
-using System.Text;
 using System.Web;
 using System.Web.Mvc;
 using Flurl.Http;
@@ -61,7 +59,7 @@ namespace Vendr.PaymentProviders.Dibs
                 throw new Exception("Currency must be a valid ISO 4217 currency code: " + currency.Name);
             }
 
-            var strCurrency = Iso4217.CurrencyCodes[currency.Code.ToUpperInvariant()].ToString(CultureInfo.InvariantCulture);
+            var strCurrency = Iso4217.CurrencyCodes[currencyCode].ToString(CultureInfo.InvariantCulture);
             var orderAmount = AmountToMinorUnits(order.TotalPrice.Value.WithTax).ToString("0", CultureInfo.InvariantCulture);
 
             var payTypes = settings.PayTypes?.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
@@ -295,7 +293,7 @@ namespace Vendr.PaymentProviders.Dibs
                     throw new Exception("Currency must be a valid ISO 4217 currency code: " + currency.Name);
                 }
 
-                var strCurrency = Iso4217.CurrencyCodes[currency.Code.ToUpperInvariant()].ToString(CultureInfo.InvariantCulture);
+                var strCurrency = Iso4217.CurrencyCodes[currencyCode].ToString(CultureInfo.InvariantCulture);
                 var strAmount = AmountToMinorUnits(order.TransactionInfo.AmountAuthorized.Value).ToString("0", CultureInfo.InvariantCulture);
 
                 // MD5(key2 + MD5(key1 + "merchant=<merchant>&orderid=<orderid>&transact=<transact>&amount=<amount>")) 
