@@ -17,7 +17,7 @@ namespace Vendr.Contrib.PaymentProviders.Reepay.Api
             _config = config;
         }
 
-        public DibsPaymentResult CreatePayment(object data)
+        public DibsPaymentResult CreatePayment(DibsPaymentRequest data)
         {
             return Request("/v1/payments/", (req) => req
                 .WithHeader("Content-Type", "application/json")

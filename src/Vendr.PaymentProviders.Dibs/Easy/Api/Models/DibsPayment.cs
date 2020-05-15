@@ -12,7 +12,7 @@ namespace Vendr.PaymentProviders.Dibs.Easy.Api.Models
     public class DibsPayment
     {
         [JsonProperty("checkout")]
-        public DibsCheckout Checkout { get; set; }
+        public DibsPaymentCheckout Checkout { get; set; }
 
         [JsonProperty("created")]
         public DateTime Created { get; set; }
@@ -21,7 +21,7 @@ namespace Vendr.PaymentProviders.Dibs.Easy.Api.Models
         public string PaymentId { get; set; }
     }
 
-    public class DibsCheckout
+    public class DibsPaymentCheckout
     {
         [JsonProperty("url")]
         public string Url { get; set; }

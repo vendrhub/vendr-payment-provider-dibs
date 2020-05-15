@@ -12,6 +12,7 @@ using Vendr.Core.Web;
 using Vendr.Core.Web.Api;
 using Vendr.Core.Web.PaymentProviders;
 using Vendr.PaymentProviders.Dibs;
+using Vendr.PaymentProviders.Dibs.Easy.Api.Models;
 
 namespace Vendr.Contrib.PaymentProviders
 {
@@ -73,56 +74,57 @@ namespace Vendr.Contrib.PaymentProviders
                 var clientConfig = GetDibsEasyClientConfig(settings);
                 var client = new DibsEasyClient(clientConfig);
 
-                var items = order.OrderLines.Select(x => new
+                var items = order.OrderLines.Select(x => new DibsOrderItem
                 {
-                    reference = x.Sku,
-                    name = x.Name,
-                    quantity = (int)x.Quantity,
-                    unit = "pcs",
-                    unitPrice = AmountToMinorUnits(x.UnitPrice.Value.WithoutTax),
-                    taxRate = AmountToMinorUnits(x.TaxRate.Value * 100),
-                    grossTotalAmount = AmountToMinorUnits(x.TotalPrice.Value.WithTax),
-                    netTotalAmount = AmountToMinorUnits(x.TotalPrice.Value.WithoutTax)
+                    Reference = x.Sku,
+                    Name = x.Name,
+                    Quantity = (int)x.Quantity,
+                    Unit = "pcs",
+                    UnitPrice = (int)AmountToMinorUnits(x.UnitPrice.Value.WithoutTax),
+                    TaxRate = (int)AmountToMinorUnits(x.TaxRate.Value * 100),
+                    GrossTotalAmount = (int)AmountToMinorUnits(x.TotalPrice.Value.WithTax),
+                    NetTotalAmount = (int)AmountToMinorUnits(x.TotalPrice.Value.WithoutTax)
                 });
 
-                var data = new
+                var data = new DibsPaymentRequest
                 {
-                    order = new
+                    Order = new DibsOrder
                     {
-                        items = items,
-                        amount =  orderAmount,
-                        currency = currencyCode,
-                        reference = order.OrderNumber
+                        Reference = order.OrderNumber,
+                        Currency = currencyCode,
+                        Amount = (int)orderAmount,
+                        Items = items.ToArray()
                     },
-                    consumer = new
+                    Consumer = new DibsConsumer
                     {
-                        reference = order.CustomerInfo.CustomerReference,
-                        email = order.CustomerInfo.Email
+                        Reference = order.CustomerInfo.CustomerReference,
+                        Email = order.CustomerInfo.Email
                     },
-                    checkout = new
+                    Checkout = new DibsCheckout
                     {
-                        charge = false,
-                        integrationType = "HostedPaymentPage",
-                        returnUrl = continueUrl,
-                        termsUrl = "https://www.mydomain.com/toc",
-                        appearance = new
+                        Charge = false,
+                        IntegrationType = "HostedPaymentPage",
+                        ReturnUrl = continueUrl,
+                        TermsUrl = "https://www.mydomain.com/toc",
+                        Appearance = new DibsAppearance
                         {
-                           displayOptions = new
-                           {
-                                showMerchantName = false,
-                                showOrderSummary = false
-                           }
+                            DisplayOptions = new DibsDisplayOptions
+                            {
+                                ShowMerchantName = true,
+                                ShowOrderSummary = true
+                            }
                         },
-                        merchantHandlesConsumerData = true
+                        MerchantHandlesConsumerData = true
                     },
-                    notifications = new
+                    Notifications = new DibsNotifications
                     {
-                        webhooks = new []
+                        Webhooks = new DibsWebhook[]
                         {
-                            new {
-                                eventName = "payment.created",
-                                url = callbackUrl.Replace("http", "https"),
-                                authorization = "12345678"
+                            new DibsWebhook
+                            {
+                                EventName = "payment.created",
+                                Url = callbackUrl.Replace("http", "https"),
+                                Authorization = "12345678"
                             }
                         }
                     }
