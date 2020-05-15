@@ -145,44 +145,44 @@ namespace Vendr.Contrib.PaymentProviders
                 {
                     { "dibsEasyPaymentId", paymentId }
                 },
-                //Form = new PaymentForm(paymentFormLink, FormMethod.Get)
-                Form = new PaymentForm(continueUrl, FormMethod.Get)
-                            .WithAttribute("onsubmit", "return handleDibsEasyCheckout(event)")
-                            .WithJsFile($"https://{(settings.TestMode ? "test." : "")}checkout.dibspayment.eu/v1/checkout.js?v=1")
-                            .WithJs(@"
+                Form = new PaymentForm(paymentFormLink, FormMethod.Get)
+                //Form = new PaymentForm(continueUrl, FormMethod.Get)
+                //            .WithAttribute("onsubmit", "return handleDibsEasyCheckout(event)")
+                //            .WithJsFile($"https://{(settings.TestMode ? "test." : "")}checkout.dibspayment.eu/v1/checkout.js?v=1")
+                //            .WithJs(@"
 
-                                window.handleDibsEasyCheckout = function (e) {
-                                    e.preventDefault();
+                //                window.handleDibsEasyCheckout = function (e) {
+                //                    e.preventDefault();
 
-                                    //var elem = document.createElement('div');
-                                    //elem.id = 'dibs-complete-checkout';
-                                    //document.body.appendChild(elem);
+                //                    //var elem = document.createElement('div');
+                //                    //elem.id = 'dibs-complete-checkout';
+                //                    //document.body.appendChild(elem);
         
-                                    var checkoutOptions = {
-                                        checkoutKey: '" + checkoutKey + @"',
-                                        paymentId : '" + paymentId + @"',
-                                        //containerId: 'dibs-complete-checkout',
-                                        language: 'en-GB',
-                                        theme: {
-                                            textColor: 'blue'
-                                        }
-                                    };
+                //                    var checkoutOptions = {
+                //                        checkoutKey: '" + checkoutKey + @"',
+                //                        paymentId : '" + paymentId + @"',
+                //                        //containerId: 'dibs-complete-checkout',
+                //                        language: 'en-GB',
+                //                        theme: {
+                //                            textColor: 'blue'
+                //                        }
+                //                    };
 
-                                    var checkout = new Dibs.Checkout(checkoutOptions);
+                //                    var checkout = new Dibs.Checkout(checkoutOptions);
                                     
-                                    // Success
-                                    checkout.on('payment-completed', function(response) {
-                                        window.location = '" + continueUrl + @"' + '&paymentId=' + response.paymentId;
-                                    });
+                //                    // Success
+                //                    checkout.on('payment-completed', function(response) {
+                //                        window.location = '" + continueUrl + @"' + '&paymentId=' + response.paymentId;
+                //                    });
                                     
-                                    // Cancel
-                                    checkout.on('payment-declined', function(response) {
-                                        window.location = '" + cancelUrl + @"' + '&paymentId=' + response.paymentId;
-                                    });
+                //                    // Cancel
+                //                    checkout.on('payment-declined', function(response) {
+                //                        window.location = '" + cancelUrl + @"' + '&paymentId=' + response.paymentId;
+                //                    });
                                     
-                                    return false;
-                                }
-                            ")
+                //                    return false;
+                //                }
+                //            ")
             };
         }
 
