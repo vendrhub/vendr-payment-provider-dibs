@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Web;
 using System.Web.Mvc;
@@ -122,8 +123,8 @@ namespace Vendr.Contrib.PaymentProviders
                         {
                             new DibsWebhook
                             {
-                                EventName = "payment.created",
-                                Url = callbackUrl.Replace("http", "https"),
+                                EventName = "payment.checkout.completed",
+                                Url = callbackUrl.Replace("http://", "https://"),
                                 Authorization = "12345678"
                             }
                         }
@@ -212,9 +213,20 @@ namespace Vendr.Contrib.PaymentProviders
             try
             {
                 // Process callback
+                
                 var clientConfig = GetDibsEasyClientConfig(settings);
                 var client = new DibsEasyClient(clientConfig);
+                var dibsEvent = GetDibsWebhookEvent(client, request);
 
+                if (dibsEvent != null && dibsEvent.Event == "payment.checkout.completed")
+                {
+                    //return CallbackResult.Ok(new TransactionInfo
+                    //{
+                    //    TransactionId = dibsEvent.Transaction,
+                    //    AmountAuthorized = order.TotalPrice.Value.WithTax,
+                    //    PaymentStatus = PaymentStatus.Authorized
+                    //});
+                }
             }
             catch (Exception ex)
             {
@@ -364,5 +376,40 @@ namespace Vendr.Contrib.PaymentProviders
                 //WebhookSecret = settings.WebhookSecret
             };
         }
+
+        protected DibsWebhookEvent GetDibsWebhookEvent(DibsEasyClient client, HttpRequestBase request)
+        {
+            DibsWebhookEvent dibsWebhookEvent = null;
+
+            if (HttpContext.Current.Items["Vendr_DibsEasyWebhookEvent"] != null)
+            {
+                dibsWebhookEvent = (DibsWebhookEvent)HttpContext.Current.Items["Vendr_DibsEasyWebhookEvent"];
+            }
+            else
+            {
+                try
+                {
+                    if (request.InputStream.CanSeek)
+                        request.InputStream.Seek(0, SeekOrigin.Begin);
+
+                    using (var reader = new StreamReader(request.InputStream))
+                    {
+                        var json = reader.ReadToEnd();
+
+
+                        //dibsWebhookEvent = client.ParseWebhookEvent(request);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Vendr.Log.Error<DibsEasyOneTimePaymentProvider>(ex, "Dibs Easy - GetDibsWebhookEvent");
+                }
+
+                HttpContext.Current.Items["Vendr_DibsEasyWebhookEvent"] = dibsWebhookEvent;
+            }
+
+            return dibsWebhookEvent;
+        }
+
     }
 }
