@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json.Linq;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -220,6 +221,10 @@ namespace Vendr.Contrib.PaymentProviders
 
                 if (dibsEvent != null && dibsEvent.Event == "payment.checkout.completed")
                 {
+                    var paymentId = dibsEvent.Data?.SelectToken("paymentId")?.Value<string>();
+
+                    var paymentDetails = client.GetPaymentDetails(paymentId);
+
                     //return CallbackResult.Ok(new TransactionInfo
                     //{
                     //    TransactionId = dibsEvent.Transaction,
