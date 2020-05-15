@@ -105,7 +105,26 @@ namespace Vendr.Contrib.PaymentProviders
                         integrationType = "HostedPaymentPage",
                         returnUrl = continueUrl,
                         termsUrl = "https://www.mydomain.com/toc",
+                        appearance = new
+                        {
+                           displayOptions = new
+                           {
+                                showMerchantName = false,
+                                showOrderSummary = false
+                           }
+                        },
                         merchantHandlesConsumerData = true
+                    },
+                    notifications = new
+                    {
+                        webhooks = new []
+                        {
+                            new {
+                                eventName = "payment.created",
+                                url = callbackUrl.Replace("http", "https"),
+                                authorization = "12345678"
+                            }
+                        }
                     }
                 };
 
@@ -191,8 +210,9 @@ namespace Vendr.Contrib.PaymentProviders
             try
             {
                 // Process callback
+                var clientConfig = GetDibsEasyClientConfig(settings);
+                var client = new DibsEasyClient(clientConfig);
 
-                
             }
             catch (Exception ex)
             {
@@ -209,7 +229,7 @@ namespace Vendr.Contrib.PaymentProviders
             try
             {
                 //var clientConfig = GetDibsEasyClientConfig(settings);
-                //var client = new ReepayClient(clientConfig);
+                //var client = new DibsEasyClient(clientConfig);
 
                 //// Get payment
                 //var payment = client.GetPayment(order.OrderNumber);
