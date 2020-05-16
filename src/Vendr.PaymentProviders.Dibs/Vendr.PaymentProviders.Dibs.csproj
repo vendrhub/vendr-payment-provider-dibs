@@ -92,6 +92,7 @@
     <Compile Include="DibsSettingsBase.cs" />
     <Compile Include="DibsSettingsEasyBase.cs" />
     <Compile Include="Easy\Api\DibsEasyClient.cs" />
+    <Compile Include="Easy\Api\Models\DibsCharge.cs" />
     <Compile Include="Easy\Api\Models\DibsEasyClientConfig.cs" />
     <Compile Include="Easy\Api\Models\DibsOrder.cs" />
     <Compile Include="Easy\Api\Models\DibsPayment.cs" />

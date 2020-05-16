@@ -39,12 +39,12 @@ namespace Vendr.Contrib.PaymentProviders.Reepay.Api
                 .ReceiveJson<string>());
         }
 
-        public string ChargePayment(string paymentId, object data)
+        public DibsCharge ChargePayment(string paymentId, object data)
         {
             return Request($"/v1/payments/{paymentId}/charges", (req) => req
                 .WithHeader("Content-Type", "application/json")
                 .PostJsonAsync(data)
-                .ReceiveJson<string>());
+                .ReceiveJson<DibsCharge>());
         }
 
         public string RefundPayment(string chargeId, object data)
