@@ -245,18 +245,23 @@ namespace Vendr.Contrib.PaymentProviders
                 var client = new DibsEasyClient(clientConfig);
                 var dibsEvent = GetDibsWebhookEvent(client, request);
 
-                if (dibsEvent != null && dibsEvent.Event == "payment.checkout.completed")
+                if (dibsEvent != null && dibsEvent.Event == "payment.checkout.completed")        
                 {
+                    // order.Properties["dibsEasyWebhookGuid"]?.Value == ?
+
                     var paymentId = dibsEvent.Data?.SelectToken("paymentId")?.Value<string>();
+                    var paymentDetails = !string.IsNullOrEmpty(paymentId) ? client.GetPaymentDetails(paymentId) : null;
+                    if (paymentDetails != null)
+                    {
+                        var captured = paymentDetails.Payment.Summary.ChargedAmount > 0;
 
-                    var paymentDetails = client.GetPaymentDetails(paymentId);
-
-                    //return CallbackResult.Ok(new TransactionInfo
-                    //{
-                    //    TransactionId = dibsEvent.Transaction,
-                    //    AmountAuthorized = order.TotalPrice.Value.WithTax,
-                    //    PaymentStatus = PaymentStatus.Authorized
-                    //});
+                        return CallbackResult.Ok(new TransactionInfo
+                        {
+                            TransactionId = paymentId,
+                            AmountAuthorized = order.TotalPrice.Value.WithTax,
+                            PaymentStatus = !captured ? PaymentStatus.Authorized : PaymentStatus.Captured
+                        });
+                    }
                 }
             }
             catch (Exception ex)
