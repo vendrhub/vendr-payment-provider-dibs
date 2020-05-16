@@ -68,6 +68,9 @@ namespace Vendr.Contrib.PaymentProviders
                    .Select(s => s.Trim())
                    .ToArray();
 
+            var paymentMethodId = order.PaymentInfo.PaymentMethodId;
+            var paymentMethod = paymentMethodId != null ? Vendr.Services.PaymentMethodService.GetPaymentMethod(paymentMethodId.Value) : null;
+
             string paymentId = string.Empty;
             string paymentFormLink = string.Empty;
 
@@ -129,7 +132,26 @@ namespace Vendr.Contrib.PaymentProviders
                                 Authorization = "12345678"
                             }
                         }
-                    }
+                    } //,
+                    //PaymentMethods = new DibsPaymentMethod[]
+                    //{
+                    //    new DibsPaymentMethod
+                    //    {
+                    //        Name = paymentMethod?.Name,
+                    //        Fee = new DibsPaymentFee
+                    //        {
+                    //            Name = paymentMethod?.Name,
+                    //            Reference = paymentMethod?.Alias,
+                    //            Quantity = 1,
+                    //            Unit = "pcs",
+                    //            UnitPrice = (int)AmountToMinorUnits(order.PaymentInfo.TotalPrice.Value.WithoutTax),
+                    //            TaxAmount = (int)AmountToMinorUnits(order.PaymentInfo.TotalPrice.Value.Tax),
+                    //            TaxRate = (int)AmountToMinorUnits(order.PaymentInfo.TaxRate.Value * 100),
+                    //            GrossTotalAmount = (int)AmountToMinorUnits(order.PaymentInfo.TotalPrice.Value.WithTax),
+                    //            NetTotalAmount = (int)AmountToMinorUnits(order.PaymentInfo.TotalPrice.Value.WithoutTax)
+                    //        }
+                    //    }
+                    //}
                 };
 
                 // Create payment
