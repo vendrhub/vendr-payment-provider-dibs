@@ -24,6 +24,11 @@ namespace Vendr.PaymentProviders.Dibs
             SortOrder = 400)]
         public string MerchantId { get; set; }
 
+        [PaymentProviderSetting(Name = "Language",
+            Description = "Language used in the payment window.",
+            SortOrder = 500)]
+        public string Language { get; set; }
+
         [PaymentProviderSetting(Name = "Test Mode",
             Description = "Set whether to process payments in test mode.",
             SortOrder = 10000)]

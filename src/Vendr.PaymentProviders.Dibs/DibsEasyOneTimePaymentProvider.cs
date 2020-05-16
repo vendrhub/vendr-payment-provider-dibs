@@ -145,11 +145,10 @@ namespace Vendr.Contrib.PaymentProviders
                     var uriBuilder = new UriBuilder(paymentDetails.Payment.Checkout.Url);
                     var query = HttpUtility.ParseQueryString(uriBuilder.Query);
 
-                    //if (!string.IsNullOrEmpty(settings.Language))
-                    //{
-                    //    query["language"] = settings.Language;
-                    //}
-                    query["language"] = "da-DK";
+                    if (!string.IsNullOrEmpty(settings.Language))
+                    {
+                        query["language"] = settings.Language;
+                    }
 
                     uriBuilder.Query = query.ToString();
                     paymentFormLink = uriBuilder.ToString();
