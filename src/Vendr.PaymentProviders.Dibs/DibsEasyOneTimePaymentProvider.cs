@@ -104,7 +104,7 @@ namespace Vendr.Contrib.PaymentProviders
                     },
                     Checkout = new DibsCheckout
                     {
-                        Charge = false,
+                        Charge = settings.Capture,
                         IntegrationType = "HostedPaymentPage",
                         ReturnUrl = continueUrl,
                         TermsUrl = "https://www.mydomain.com/toc",
@@ -125,7 +125,7 @@ namespace Vendr.Contrib.PaymentProviders
                             new DibsWebhook
                             {
                                 EventName = "payment.checkout.completed",
-                                Url = callbackUrl.Replace("http://", "https://"),
+                                Url = callbackUrl.Replace("http://", "https://"), // Must be https 
                                 Authorization = "12345678"
                             }
                         }
