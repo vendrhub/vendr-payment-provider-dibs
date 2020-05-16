@@ -164,7 +164,7 @@ namespace Vendr.Contrib.PaymentProviders
                 // Get payment id
                 paymentId = payment.PaymentId;
 
-                var paymentDetails = client.GetPaymentDetails(paymentId);
+                var paymentDetails = client.GetPayment(paymentId);
 
                 if (paymentDetails != null)
                 {
@@ -250,16 +250,14 @@ namespace Vendr.Contrib.PaymentProviders
                     // order.Properties["dibsEasyWebhookGuid"]?.Value == ?
 
                     var paymentId = dibsEvent.Data?.SelectToken("paymentId")?.Value<string>();
-                    var paymentDetails = !string.IsNullOrEmpty(paymentId) ? client.GetPaymentDetails(paymentId) : null;
-                    if (paymentDetails != null)
+                    var payment = !string.IsNullOrEmpty(paymentId) ? client.GetPayment(paymentId) : null;
+                    if (payment != null)
                     {
-                        var captured = paymentDetails.Payment.Summary.ChargedAmount > 0;
-
                         return CallbackResult.Ok(new TransactionInfo
                         {
                             TransactionId = paymentId,
                             AmountAuthorized = order.TotalPrice.Value.WithTax,
-                            PaymentStatus = !captured ? PaymentStatus.Authorized : PaymentStatus.Captured
+                            PaymentStatus = GetPaymentStatus(payment)
                         });
                     }
                 }
@@ -397,6 +395,25 @@ namespace Vendr.Contrib.PaymentProviders
             }
 
             return ApiResult.Empty;
+        }
+
+        protected PaymentStatus GetPaymentStatus(DibsPaymentDetails paymentDetails)
+        {
+            var payment = paymentDetails.Payment;
+
+            if (payment.Summary.RefundedAmount > 0)
+                return PaymentStatus.Refunded;
+
+            if (payment.Summary.CancelledAmount > 0)
+                return PaymentStatus.Cancelled;
+
+            if (payment.Summary.ChargedAmount > 0)
+                return PaymentStatus.Captured;
+
+            if (payment.Summary.ReservedAmount > 0)
+                return PaymentStatus.Authorized;
+
+            return PaymentStatus.Initialized;
         }
 
         protected DibsEasyClientConfig GetDibsEasyClientConfig(DibsSettingsEasyBase settings)
