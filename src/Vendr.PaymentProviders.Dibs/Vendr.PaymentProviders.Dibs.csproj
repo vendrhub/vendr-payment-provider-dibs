@@ -93,7 +93,9 @@
     <Compile Include="DibsSettingsEasyBase.cs" />
     <Compile Include="Easy\Api\DibsEasyClient.cs" />
     <Compile Include="Easy\Api\Models\DibsEasyClientConfig.cs" />
+    <Compile Include="Easy\Api\Models\DibsOrder.cs" />
     <Compile Include="Easy\Api\Models\DibsPayment.cs" />
+    <Compile Include="Easy\Api\Models\DibsPaymentMethod.cs" />
     <Compile Include="Easy\Api\Models\DibsPaymentRequest.cs" />
     <Compile Include="Easy\Api\Models\DibsPaymentResult.cs" />
     <Compile Include="DibsLang.cs" />

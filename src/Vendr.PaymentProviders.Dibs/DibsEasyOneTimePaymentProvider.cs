@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json.Linq;
+﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -33,7 +34,8 @@ namespace Vendr.Contrib.PaymentProviders
         public override bool FinalizeAtContinueUrl => true;
 
         public override IEnumerable<TransactionMetaDataDefinition> TransactionMetaDataDefinitions => new[]{
-            new TransactionMetaDataDefinition("dibsEasyPaymentId", "Dibs (Easy) Payment ID")
+            new TransactionMetaDataDefinition("dibsEasyPaymentId", "Dibs (Easy) Payment ID"),
+            new TransactionMetaDataDefinition("dibsEasyWebhookGuid", "Dibs (Easy) Webhook Guid")
         };
 
         public override OrderReference GetOrderReference(HttpRequestBase request, DibsEasyOneTimeSettings settings)
@@ -73,6 +75,8 @@ namespace Vendr.Contrib.PaymentProviders
 
             string paymentId = string.Empty;
             string paymentFormLink = string.Empty;
+
+            var webhookGuid = Guid.NewGuid();
 
             try
             {
@@ -129,7 +133,7 @@ namespace Vendr.Contrib.PaymentProviders
                             {
                                 EventName = "payment.checkout.completed",
                                 Url = callbackUrl.Replace("http://", "https://"), // Must be https 
-                                Authorization = "12345678"
+                                Authorization = webhookGuid.ToString()
                             }
                         }
                     } //,
@@ -187,7 +191,8 @@ namespace Vendr.Contrib.PaymentProviders
             {
                 MetaData = new Dictionary<string, string>
                 {
-                    { "dibsEasyPaymentId", paymentId }
+                    { "dibsEasyPaymentId", paymentId },
+                    { "dibsEasyWebhookGuid", webhookGuid.ToString() }
                 },
                 Form = new PaymentForm(paymentFormLink, FormMethod.Get)
                 //Form = new PaymentForm(continueUrl, FormMethod.Get)
@@ -422,8 +427,10 @@ namespace Vendr.Contrib.PaymentProviders
                     {
                         var json = reader.ReadToEnd();
 
-
-                        //dibsWebhookEvent = client.ParseWebhookEvent(request);
+                        if (!string.IsNullOrEmpty(json))
+                        {
+                            dibsWebhookEvent = JsonConvert.DeserializeObject<DibsWebhookEvent>(json);
+                        }
                     }
                 }
                 catch (Exception ex)
