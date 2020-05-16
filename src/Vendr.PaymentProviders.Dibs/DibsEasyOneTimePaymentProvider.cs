@@ -276,20 +276,22 @@ namespace Vendr.Contrib.PaymentProviders
 
             try
             {
-                //var clientConfig = GetDibsEasyClientConfig(settings);
-                //var client = new DibsEasyClient(clientConfig);
+                var clientConfig = GetDibsEasyClientConfig(settings);
+                var client = new DibsEasyClient(clientConfig);
 
-                //// Get payment
-                //var payment = client.GetPayment(order.OrderNumber);
-
-                //return new ApiResult()
-                //{
-                //    TransactionInfo = new TransactionInfoUpdate()
-                //    {
-                //        TransactionId = GetTransactionId(payment),
-                //        PaymentStatus = GetPaymentStatus(payment)
-                //    }
-                //};
+                // Get payment
+                var payment = client.GetPayment(order.TransactionInfo.TransactionId);
+                if (payment != null)
+                {
+                    return new ApiResult()
+                    {
+                        TransactionInfo = new TransactionInfoUpdate()
+                        {
+                            TransactionId = GetTransactionId(payment),
+                            PaymentStatus = GetPaymentStatus(payment)
+                        }
+                    };
+                }
             }
             catch (Exception ex)
             {
@@ -305,20 +307,24 @@ namespace Vendr.Contrib.PaymentProviders
 
             try
             {
-                //var clientConfig = GetDibsEasyClientConfig(settings);
-                //var client = new DibsEasyClient(clientConfig);
+                var clientConfig = GetDibsEasyClientConfig(settings);
+                var client = new DibsEasyClient(clientConfig);
 
-                //// Cancel charge
-                //var payment = client.CancelPayment(order.OrderNumber);
+                var transactionId = order.TransactionInfo.TransactionId;
 
-                //return new ApiResult()
-                //{
-                //    TransactionInfo = new TransactionInfoUpdate()
-                //    {
-                //        TransactionId = GetTransactionId(payment),
-                //        PaymentStatus = GetPaymentStatus(payment)
-                //    }
-                //};
+                // Cancel charge
+                var payment = client.CancelPayment(transactionId);
+                if (payment != null)
+                {
+                    return new ApiResult()
+                    {
+                        TransactionInfo = new TransactionInfoUpdate()
+                        {
+                            TransactionId = transactionId,
+                            PaymentStatus = PaymentStatus.Cancelled
+                        }
+                    };
+                }
             }
             catch (Exception ex)
             {
@@ -334,25 +340,28 @@ namespace Vendr.Contrib.PaymentProviders
 
             try
             {
-                //var clientConfig = GetDibsEasyClientConfig(settings);
-                //var client = new DibsEasyClient(clientConfig);
+                var clientConfig = GetDibsEasyClientConfig(settings);
+                var client = new DibsEasyClient(clientConfig);
 
-                //var data = new
-                //{
-                //    amount = AmountToMinorUnits(order.TransactionInfo.AmountAuthorized.Value)
-                //};
+                var transactionId = order.TransactionInfo.TransactionId;
 
-                //// Settle charge
-                //var payment = client.ChargePayment(order.OrderNumber, data);
+                var data = new
+                {
+                    amount = AmountToMinorUnits(order.TransactionInfo.AmountAuthorized.Value)
+                };
 
-                //return new ApiResult()
-                //{
-                //    TransactionInfo = new TransactionInfoUpdate()
-                //    {
-                //        TransactionId = GetTransactionId(payment),
-                //        PaymentStatus = GetPaymentStatus(payment)
-                //    }
-                //};
+                var payment = client.ChargePayment(transactionId, data);
+                if (payment != null)
+                {
+                    return new ApiResult()
+                    {
+                        TransactionInfo = new TransactionInfoUpdate()
+                        {
+                            TransactionId = transactionId,
+                            PaymentStatus = PaymentStatus.Captured
+                        }
+                    };
+                }
             }
             catch (Exception ex)
             {
@@ -368,26 +377,28 @@ namespace Vendr.Contrib.PaymentProviders
 
             try
             {
-                //var clientConfig = GetDibsEasyClientConfig(settings);
-                //var client = new DibsEasyClient(clientConfig);
+                var clientConfig = GetDibsEasyClientConfig(settings);
+                var client = new DibsEasyClient(clientConfig);
 
-                //var data = new
-                //{
-                //    invoice = order.OrderNumber,
-                //    amount = AmountToMinorUnits(order.TransactionInfo.AmountAuthorized.Value)
-                //};
+                var transactionId = order.TransactionInfo.TransactionId;
+                var chargeId = ""; //order.Properties["dibsEasyChargeId"]?.Value;
 
-                //// Refund charge
-                //var refund = client.RefundPayment(data);
+                var data = new
+                {
+                    invoice = order.OrderNumber,
+                    amount = AmountToMinorUnits(order.TransactionInfo.AmountAuthorized.Value)
+                };
 
-                //return new ApiResult()
-                //{
-                //    TransactionInfo = new TransactionInfoUpdate()
-                //    {
-                //        TransactionId = GetTransactionId(refund),
-                //        PaymentStatus = GetPaymentStatus(refund)
-                //    }
-                //};
+                var refund = client.RefundPayment(chargeId, data);
+
+                return new ApiResult()
+                {
+                    TransactionInfo = new TransactionInfoUpdate()
+                    {
+                        TransactionId = transactionId,
+                        PaymentStatus = PaymentStatus.Refunded
+                    }
+                };
             }
             catch (Exception ex)
             {
@@ -395,6 +406,11 @@ namespace Vendr.Contrib.PaymentProviders
             }
 
             return ApiResult.Empty;
+        }
+
+        protected string GetTransactionId(DibsPaymentDetails paymentDetails)
+        {
+            return paymentDetails?.Payment?.PaymentId;
         }
 
         protected PaymentStatus GetPaymentStatus(DibsPaymentDetails paymentDetails)
