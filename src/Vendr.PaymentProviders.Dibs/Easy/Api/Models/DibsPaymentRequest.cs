@@ -135,9 +135,4 @@ namespace Vendr.PaymentProviders.Dibs.Easy.Api.Models
         [JsonProperty("completePaymentButtonText")]
         public string CompletePaymentButtonText { get; set; }
     }
-
-    public enum PaymentButtonText
-    {
-
-    }
 }
