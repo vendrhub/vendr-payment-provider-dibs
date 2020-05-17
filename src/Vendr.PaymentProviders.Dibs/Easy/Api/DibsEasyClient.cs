@@ -31,12 +31,12 @@ namespace Vendr.Contrib.PaymentProviders.Reepay.Api
                 .GetJsonAsync<DibsPaymentDetails>());
         }
 
-        public string CancelPayment(string paymentId)
+        public DibsCancel CancelPayment(string paymentId)
         {
             return Request($"/v1/payments/{paymentId}/cancels", (req) => req
                 .WithHeader("Content-Type", "application/json")
                 .PostAsync(null)
-                .ReceiveJson<string>());
+                .ReceiveJson<DibsCancel>());
         }
 
         public DibsCharge ChargePayment(string paymentId, object data)
@@ -47,12 +47,12 @@ namespace Vendr.Contrib.PaymentProviders.Reepay.Api
                 .ReceiveJson<DibsCharge>());
         }
 
-        public string RefundPayment(string chargeId, object data)
+        public DibsRefund RefundPayment(string chargeId, object data)
         {
             return Request($"/v1/charges/{chargeId}/refunds", (req) => req
                 .WithHeader("Content-Type", "application/json")
                 .PostJsonAsync(data)
-                .ReceiveJson<string>());
+                .ReceiveJson<DibsRefund>());
         }
 
         private TResult Request<TResult>(string url, Func<IFlurlRequest, Task<TResult>> func)
