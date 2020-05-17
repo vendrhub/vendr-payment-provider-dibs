@@ -31,11 +31,11 @@ namespace Vendr.Contrib.PaymentProviders.Reepay.Api
                 .GetJsonAsync<DibsPaymentDetails>());
         }
 
-        public string CancelPayment(string paymentId)
+        public string CancelPayment(string paymentId, object data)
         {
             return Request($"/v1/payments/{paymentId}/cancels", (req) => req
                 .WithHeader("Content-Type", "application/json")
-                .PostAsync(null)
+                .PostJsonAsync(data)
                 .ReceiveJson<string>());
         }
 

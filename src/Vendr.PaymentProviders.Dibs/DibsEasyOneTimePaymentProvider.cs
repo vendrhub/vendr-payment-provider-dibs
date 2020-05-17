@@ -319,8 +319,13 @@ namespace Vendr.Contrib.PaymentProviders
 
                 var transactionId = order.TransactionInfo.TransactionId;
 
+                var data = new
+                {
+                    amount = AmountToMinorUnits(order.TransactionInfo.AmountAuthorized.Value)
+                };
+
                 // Cancel charge
-                client.CancelPayment(transactionId);
+                client.CancelPayment(transactionId, data);
 
                 return new ApiResult()
                 {
