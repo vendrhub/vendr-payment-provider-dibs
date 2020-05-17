@@ -35,6 +35,8 @@ namespace Vendr.Contrib.PaymentProviders
 
         public override IEnumerable<TransactionMetaDataDefinition> TransactionMetaDataDefinitions => new[]{
             new TransactionMetaDataDefinition("dibsEasyPaymentId", "Dibs (Easy) Payment ID"),
+            new TransactionMetaDataDefinition("dibsEasyChargeId", "Dibs (Easy) Charge ID"),
+            new TransactionMetaDataDefinition("dibsEasyRefundId", "Dibs (Easy) Refund ID"),
             new TransactionMetaDataDefinition("dibsEasyWebhookGuid", "Dibs (Easy) Webhook Guid")
         };
 
@@ -279,8 +281,10 @@ namespace Vendr.Contrib.PaymentProviders
                 var clientConfig = GetDibsEasyClientConfig(settings);
                 var client = new DibsEasyClient(clientConfig);
 
+                var transactionId = order.TransactionInfo.TransactionId;
+
                 // Get payment
-                var payment = client.GetPayment(order.TransactionInfo.TransactionId);
+                var payment = client.GetPayment(transactionId);
                 if (payment != null)
                 {
                     return new ApiResult()
@@ -313,8 +317,8 @@ namespace Vendr.Contrib.PaymentProviders
                 var transactionId = order.TransactionInfo.TransactionId;
 
                 // Cancel charge
-                var payment = client.CancelPayment(transactionId);
-                if (payment != null)
+                var result = client.CancelPayment(transactionId);
+                if (result != null)
                 {
                     return new ApiResult()
                     {
@@ -350,11 +354,15 @@ namespace Vendr.Contrib.PaymentProviders
                     amount = AmountToMinorUnits(order.TransactionInfo.AmountAuthorized.Value)
                 };
 
-                var payment = client.ChargePayment(transactionId, data);
-                if (payment != null)
+                var result = client.ChargePayment(transactionId, data);
+                if (result != null)
                 {
                     return new ApiResult()
                     {
+                        MetaData = new Dictionary<string, string>
+                        {
+                            { "dibsEasyChargeId", result.ChargeId }
+                        },
                         TransactionInfo = new TransactionInfoUpdate()
                         {
                             TransactionId = transactionId,
@@ -381,7 +389,7 @@ namespace Vendr.Contrib.PaymentProviders
                 var client = new DibsEasyClient(clientConfig);
 
                 var transactionId = order.TransactionInfo.TransactionId;
-                var chargeId = ""; //order.Properties["dibsEasyChargeId"]?.Value;
+                var chargeId = order.Properties["dibsEasyChargeId"]?.Value;
 
                 var data = new
                 {
@@ -389,16 +397,22 @@ namespace Vendr.Contrib.PaymentProviders
                     amount = AmountToMinorUnits(order.TransactionInfo.AmountAuthorized.Value)
                 };
 
-                var refund = client.RefundPayment(chargeId, data);
-
-                return new ApiResult()
+                var result = client.RefundPayment(chargeId, data);
+                if (result != null)
                 {
-                    TransactionInfo = new TransactionInfoUpdate()
+                    return new ApiResult()
                     {
-                        TransactionId = transactionId,
-                        PaymentStatus = PaymentStatus.Refunded
-                    }
-                };
+                        MetaData = new Dictionary<string, string>
+                        {
+                            { "dibsEasyRefundId", result.RefundId }
+                        },
+                        TransactionInfo = new TransactionInfoUpdate()
+                        {
+                            TransactionId = transactionId,
+                            PaymentStatus = PaymentStatus.Refunded
+                        }
+                    };
+                }
             }
             catch (Exception ex)
             {
