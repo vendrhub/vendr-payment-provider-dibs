@@ -113,7 +113,7 @@ namespace Vendr.Contrib.PaymentProviders
                     },
                     Checkout = new DibsCheckout
                     {
-                        Charge = settings.Capture,
+                        Charge = settings.AutoCapture,
                         IntegrationType = "HostedPaymentPage",
                         ReturnUrl = continueUrl,
                         TermsUrl = "https://www.mydomain.com/toc",
@@ -250,18 +250,20 @@ namespace Vendr.Contrib.PaymentProviders
 
                 if (dibsEvent != null && dibsEvent.Event == "payment.checkout.completed")        
                 {
-                    // order.Properties["dibsEasyWebhookGuid"]?.Value == ?
-
-                    var paymentId = dibsEvent.Data?.SelectToken("paymentId")?.Value<string>();
-                    var payment = !string.IsNullOrEmpty(paymentId) ? client.GetPayment(paymentId) : null;
-                    if (payment != null)
+                    // Verify "Authorization" header returned from webhook
+                    if (order.Properties["dibsEasyWebhookGuid"]?.Value == request.Headers["Authorization"])
                     {
-                        return CallbackResult.Ok(new TransactionInfo
+                        var paymentId = dibsEvent.Data?.SelectToken("paymentId")?.Value<string>();
+                        var payment = !string.IsNullOrEmpty(paymentId) ? client.GetPayment(paymentId) : null;
+                        if (payment != null)
                         {
-                            TransactionId = paymentId,
-                            AmountAuthorized = order.TotalPrice.Value.WithTax,
-                            PaymentStatus = GetPaymentStatus(payment)
-                        });
+                            return CallbackResult.Ok(new TransactionInfo
+                            {
+                                TransactionId = paymentId,
+                                AmountAuthorized = order.TotalPrice.Value.WithTax,
+                                PaymentStatus = GetPaymentStatus(payment)
+                            });
+                        }
                     }
                 }
             }
