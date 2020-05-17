@@ -318,18 +318,16 @@ namespace Vendr.Contrib.PaymentProviders
                 var transactionId = order.TransactionInfo.TransactionId;
 
                 // Cancel charge
-                var result = client.CancelPayment(transactionId);
-                if (result != null)
+                client.CancelPayment(transactionId);
+
+                return new ApiResult()
                 {
-                    return new ApiResult()
+                    TransactionInfo = new TransactionInfoUpdate()
                     {
-                        TransactionInfo = new TransactionInfoUpdate()
-                        {
-                            TransactionId = transactionId,
-                            PaymentStatus = PaymentStatus.Cancelled
-                        }
-                    };
-                }
+                        TransactionId = transactionId,
+                        PaymentStatus = PaymentStatus.Cancelled
+                    }
+                };
             }
             catch (Exception ex)
             {
