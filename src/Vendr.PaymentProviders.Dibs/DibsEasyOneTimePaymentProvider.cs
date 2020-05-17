@@ -40,20 +40,6 @@ namespace Vendr.Contrib.PaymentProviders
             new TransactionMetaDataDefinition("dibsEasyWebhookGuid", "Dibs (Easy) Webhook Guid")
         };
 
-        public override OrderReference GetOrderReference(HttpRequestBase request, DibsEasyOneTimeSettings settings)
-        {
-            try
-            {
-
-            }
-            catch (Exception ex)
-            {
-                Vendr.Log.Error<DibsEasyOneTimePaymentProvider>(ex, "Dibs Easy - GetOrderReference");
-            }
-
-            return base.GetOrderReference(request, settings);
-        }
-
         public override PaymentFormResult GenerateForm(OrderReadOnly order, string continueUrl, string cancelUrl, string callbackUrl, DibsEasyOneTimeSettings settings)
         {
             var currency = Vendr.Services.CurrencyService.GetCurrency(order.CurrencyId);
