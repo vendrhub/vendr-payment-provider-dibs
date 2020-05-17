@@ -167,7 +167,6 @@ namespace Vendr.Contrib.PaymentProviders
                 paymentId = payment.PaymentId;
 
                 var paymentDetails = client.GetPayment(paymentId);
-
                 if (paymentDetails != null)
                 {
                     var uriBuilder = new UriBuilder(paymentDetails.Payment.Checkout.Url);
@@ -197,6 +196,8 @@ namespace Vendr.Contrib.PaymentProviders
                     { "dibsEasyWebhookGuid", webhookGuid.ToString() }
                 },
                 Form = new PaymentForm(paymentFormLink, FormMethod.Get)
+
+                // Embedded checkout
                 //Form = new PaymentForm(continueUrl, FormMethod.Get)
                 //            .WithAttribute("onsubmit", "return handleDibsEasyCheckout(event)")
                 //            .WithJsFile($"https://{(settings.TestMode ? "test." : "")}checkout.dibspayment.eu/v1/checkout.js?v=1")
@@ -208,7 +209,7 @@ namespace Vendr.Contrib.PaymentProviders
                 //                    //var elem = document.createElement('div');
                 //                    //elem.id = 'dibs-complete-checkout';
                 //                    //document.body.appendChild(elem);
-        
+
                 //                    var checkoutOptions = {
                 //                        checkoutKey: '" + checkoutKey + @"',
                 //                        paymentId : '" + paymentId + @"',
@@ -220,17 +221,17 @@ namespace Vendr.Contrib.PaymentProviders
                 //                    };
 
                 //                    var checkout = new Dibs.Checkout(checkoutOptions);
-                                    
+
                 //                    // Success
                 //                    checkout.on('payment-completed', function(response) {
                 //                        window.location = '" + continueUrl + @"' + '&paymentId=' + response.paymentId;
                 //                    });
-                                    
+
                 //                    // Cancel
                 //                    checkout.on('payment-declined', function(response) {
                 //                        window.location = '" + cancelUrl + @"' + '&paymentId=' + response.paymentId;
                 //                    });
-                                    
+
                 //                    return false;
                 //                }
                 //            ")
