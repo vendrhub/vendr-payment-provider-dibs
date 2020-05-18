@@ -31,7 +31,8 @@ namespace Vendr.Contrib.PaymentProviders
         public override bool CanRefundPayments => true;
         public override bool CanFetchPaymentStatus => true;
 
-        public override bool FinalizeAtContinueUrl => true;
+        // We'll finalize via webhook callback
+        public override bool FinalizeAtContinueUrl => false;
 
         public override IEnumerable<TransactionMetaDataDefinition> TransactionMetaDataDefinitions => new[]{
             new TransactionMetaDataDefinition("dibsEasyPaymentId", "Dibs (Easy) Payment ID"),
