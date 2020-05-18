@@ -102,7 +102,7 @@ namespace Vendr.Contrib.PaymentProviders
                     {
                         Charge = settings.AutoCapture,
                         IntegrationType = "HostedPaymentPage",
-                        ReturnUrl = continueUrl,
+                        ReturnUrl = callbackUrl,
                         TermsUrl = settings.TermsUrl,
                         Appearance = new DibsAppearance
                         {
@@ -229,6 +229,8 @@ namespace Vendr.Contrib.PaymentProviders
         {
             try
             {
+                // TODO: Handle payment if cancelled in payment window.
+
                 // Process callback
                 
                 var clientConfig = GetDibsEasyClientConfig(settings);
