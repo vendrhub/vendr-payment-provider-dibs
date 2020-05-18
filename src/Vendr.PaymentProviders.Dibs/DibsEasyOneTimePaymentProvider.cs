@@ -103,7 +103,7 @@ namespace Vendr.Contrib.PaymentProviders
                         Charge = settings.AutoCapture,
                         IntegrationType = "HostedPaymentPage",
                         ReturnUrl = continueUrl,
-                        TermsUrl = "https://www.mydomain.com/toc",
+                        TermsUrl = settings.TermsUrl,
                         Appearance = new DibsAppearance
                         {
                             DisplayOptions = new DibsDisplayOptions
