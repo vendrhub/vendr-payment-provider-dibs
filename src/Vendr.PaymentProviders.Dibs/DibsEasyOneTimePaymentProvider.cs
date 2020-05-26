@@ -249,8 +249,6 @@ namespace Vendr.Contrib.PaymentProviders
         {
             try
             {
-                // TODO: Handle payment if cancelled in payment window.
-
                 // Process callback
                 
                 var clientConfig = GetDibsEasyClientConfig(settings);
@@ -268,12 +266,15 @@ namespace Vendr.Contrib.PaymentProviders
                         {
                             var continueUrl = order.Properties["dibsEasyContinueUrl"]?.Value;
 
-                            var resp = new HttpResponseMessage(HttpStatusCode.Moved); // or HttpStatusCode.Redirect
-                            resp.Content.Headers.ContentLocation = new Uri(continueUrl);
+                            var successResponse = new HttpResponseMessage(HttpStatusCode.Moved) // or HttpStatusCode.Redirect
+                            {
+                                Content = new StringContent("")
+                            };
+                            successResponse.Headers.Location = new Uri(continueUrl);
 
                             return new CallbackResult
                             {
-                                HttpResponse = resp,
+                                HttpResponse = successResponse,
                                 TransactionInfo = new TransactionInfo
                                 {
                                     TransactionId = paymentId,
