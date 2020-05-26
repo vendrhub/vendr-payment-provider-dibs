@@ -196,7 +196,9 @@ namespace Vendr.Contrib.PaymentProviders
                 MetaData = new Dictionary<string, string>
                 {
                     { "dibsEasyPaymentId", paymentId },
-                    { "dibsEasyWebhookGuid", webhookGuid.ToString() }
+                    { "dibsEasyWebhookGuid", webhookGuid.ToString() },
+                    { "dibsEasyContinueUrl", continueUrl },
+                    { "dibsEasyCancelUrl", cancelUrl }
                 },
                 Form = new PaymentForm(paymentFormLink, FormMethod.Get)
 
