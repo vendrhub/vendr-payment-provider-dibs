@@ -501,7 +501,6 @@ namespace Vendr.Contrib.PaymentProviders
             {
                 BaseUrl = $"https://{(settings.TestMode ? "test." : "")}api.dibspayment.eu",
                 Authorization = auth
-                //WebhookSecret = settings.WebhookSecret
             };
         }
 
