@@ -5,6 +5,8 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Net;
+using System.Net.Http;
 using System.Web;
 using System.Web.Mvc;
 using Vendr.Contrib.PaymentProviders.Dibs.Easy.Api.Models;
@@ -264,12 +266,28 @@ namespace Vendr.Contrib.PaymentProviders
                         var payment = !string.IsNullOrEmpty(paymentId) ? client.GetPayment(paymentId) : null;
                         if (payment != null)
                         {
-                            return CallbackResult.Ok(new TransactionInfo
+                            var continueUrl = order.Properties["dibsEasyContinueUrl"]?.Value;
+
+                            var resp = new HttpResponseMessage(HttpStatusCode.Moved); // or HttpStatusCode.Redirect
+                            resp.Content.Headers.ContentLocation = new Uri(continueUrl);
+
+                            return new CallbackResult
                             {
-                                TransactionId = paymentId,
-                                AmountAuthorized = order.TotalPrice.Value.WithTax,
-                                PaymentStatus = GetPaymentStatus(payment)
-                            });
+                                HttpResponse = resp,
+                                TransactionInfo = new TransactionInfo
+                                {
+                                    TransactionId = paymentId,
+                                    AmountAuthorized = order.TotalPrice.Value.WithTax,
+                                    PaymentStatus = GetPaymentStatus(payment)
+                                }
+                            };
+
+                            //return CallbackResult.Ok(new TransactionInfo
+                            //{
+                            //    TransactionId = paymentId,
+                            //    AmountAuthorized = order.TotalPrice.Value.WithTax,
+                            //    PaymentStatus = GetPaymentStatus(payment)
+                            //});
                         }
                     }
                 }
@@ -279,7 +297,20 @@ namespace Vendr.Contrib.PaymentProviders
                 Vendr.Log.Error<DibsEasyOneTimePaymentProvider>(ex, "Dibs Easy - ProcessCallback");
             }
 
-            return CallbackResult.BadRequest();
+            var errorUrl = order.Properties["dibsEasyCancelUrl"]?.Value;
+
+            var errorResponse = new HttpResponseMessage(HttpStatusCode.Redirect)
+            {
+                Content = new StringContent("")
+            };
+            errorResponse.Headers.Location = new Uri(errorUrl);
+
+            return new CallbackResult
+            {
+                HttpResponse = errorResponse
+            };
+
+            // return CallbackResult.BadRequest();
         }
 
         public override ApiResult FetchPaymentStatus(OrderReadOnly order, DibsEasyOneTimeSettings settings)
