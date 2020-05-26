@@ -84,6 +84,22 @@ namespace Vendr.Contrib.PaymentProviders
                     NetTotalAmount = (int)AmountToMinorUnits(x.TotalPrice.Value.WithoutTax)
                 });
 
+                var shippingMethod = Vendr.Services.ShippingMethodService.GetShippingMethod(order.ShippingInfo.ShippingMethodId.Value);
+                if (shippingMethod != null)
+                {
+                    items = items.Append(new DibsOrderItem
+                    {
+                        Reference = shippingMethod.Sku,
+                        Name = shippingMethod.Name,
+                        Quantity = 1,
+                        Unit = "pcs",
+                        UnitPrice = (int)AmountToMinorUnits(order.ShippingInfo.TotalPrice.Value.WithoutTax),
+                        TaxRate = (int)AmountToMinorUnits(order.ShippingInfo.TaxRate.Value * 100),
+                        GrossTotalAmount = (int)AmountToMinorUnits(order.ShippingInfo.TotalPrice.Value.WithTax),
+                        NetTotalAmount = (int)AmountToMinorUnits(order.ShippingInfo.TotalPrice.Value.WithoutTax)
+                    });
+                }
+
                 var data = new DibsPaymentRequest
                 {
                     Order = new DibsOrder
