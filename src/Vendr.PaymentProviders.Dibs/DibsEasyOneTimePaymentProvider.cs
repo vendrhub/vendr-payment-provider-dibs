@@ -102,6 +102,21 @@ namespace Vendr.Contrib.PaymentProviders
                     });
                 }
 
+                if (order.GiftCards.Count > 0)
+                {
+                    foreach (var giftcard in order.GiftCards)
+                    {
+                        items = items.Append(new DibsOrderItem
+                        {
+                            Reference = giftcard.Code,
+                            Name = $"Gift Card - {giftcard.Code}",
+                            Quantity = 1,
+                            Unit = "pcs",
+                            GrossTotalAmount = -Math.Abs((int)AmountToMinorUnits(giftcard.Amount)),
+                        });
+                    }
+                }
+
                 var data = new DibsPaymentRequest
                 {
                     Order = new DibsOrder
