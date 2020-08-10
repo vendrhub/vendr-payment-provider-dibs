@@ -24,7 +24,7 @@
     </metadata>
     <files>
         <!-- nuget files -->
-        <file src="$SrcDir$\assets\logo-64.png" target="images\icon.png" />
+        <file src="$SrcDir$\assets\logo-128.png" target="images\icon.png" />
         
         <!-- libs -->
         <file src="$SrcDir$\bin\Vendr.PaymentProviders.Dibs.dll" target="lib\net472\Vendr.PaymentProviders.Dibs.dll" />
