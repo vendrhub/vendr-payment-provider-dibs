@@ -102,20 +102,35 @@ namespace Vendr.Contrib.PaymentProviders
                     });
                 }
 
-                if (order.GiftCards.Count > 0)
+                if (order.TransactionAmount.Adjustments.Count > 0)
                 {
-                    foreach (var giftcard in order.GiftCards)
+                    foreach (var adjustment in order.TransactionAmount.Adjustments)
                     {
                         items = items.Append(new DibsOrderItem
                         {
-                            Reference = giftcard.Code,
-                            Name = $"Gift Card - {giftcard.Code}",
+                            Reference = "",
+                            Name = "",
                             Quantity = 1,
                             Unit = "pcs",
-                            GrossTotalAmount = -Math.Abs((int)AmountToMinorUnits(giftcard.Amount)),
+                            GrossTotalAmount = -Math.Abs((int)AmountToMinorUnits(adjustment.Amount)),
                         });
                     }
                 }
+
+                //if (order.GiftCards.Count > 0)
+                //{
+                //    foreach (var giftcard in order.GiftCards)
+                //    {
+                //        items = items.Append(new DibsOrderItem
+                //        {
+                //            Reference = giftcard.Code,
+                //            Name = $"Gift Card - {giftcard.Code}",
+                //            Quantity = 1,
+                //            Unit = "pcs",
+                //            GrossTotalAmount = -Math.Abs((int)AmountToMinorUnits(giftcard.Amount)),
+                //        });
+                //    }
+                //}
 
                 var data = new DibsPaymentRequest
                 {
