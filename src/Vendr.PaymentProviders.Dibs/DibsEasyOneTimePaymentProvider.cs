@@ -104,18 +104,42 @@ namespace Vendr.Contrib.PaymentProviders
 
                 if (order.TransactionAmount.Adjustments.Count > 0)
                 {
-                    foreach (var adjustment in order.TransactionAmount.Adjustments)
+                    // Custom Price adjustments
+                    //var priceAdjustment = order.TransactionAmount.Adjustments.OfType<PriceAdjustment>();
+                    var discountAdjustments = order.TransactionAmount.Adjustments.OfType<DiscountAdjustment>();
+                    if (discountAdjustments.Any())
                     {
-                        items = items.Append(new DibsOrderItem
+                        foreach (var discount in discountAdjustments)
                         {
-                            Reference = "",
-                            Name = "",
-                            Quantity = 1,
-                            Unit = "pcs",
-                            GrossTotalAmount = -Math.Abs((int)AmountToMinorUnits(adjustment.Amount)),
-                        });
+                            items = items.Append(new DibsOrderItem
+                            {
+                                Reference = discount.DiscountId.ToString(),
+                                Name = discount.DiscountName,
+                                Quantity = 1,
+                                Unit = "pcs",
+                                GrossTotalAmount = -Math.Abs((int)AmountToMinorUnits(discount.Price)),
+                            });
+                        }
+                    }
+
+                    // Gift Card adjustments
+                    var giftCardAdjustments = order.TransactionAmount.Adjustments.OfType<GiftCardAdjustment>();
+                    if (giftCardAdjustments.Any())
+                    {
+                        foreach (var giftcard in giftCardAdjustments)
+                        {
+                            items = items.Append(new DibsOrderItem
+                            {
+                                Reference = giftcard.GiftCardId.ToString(),
+                                Name = giftcard.GiftCardCode,
+                                Quantity = 1,
+                                Unit = "pcs",
+                                GrossTotalAmount = -Math.Abs((int)AmountToMinorUnits(giftcard.Amount)),
+                            });
+                        }
                     }
                 }
+                
 
                 //if (order.GiftCards.Count > 0)
                 //{
@@ -287,6 +311,11 @@ namespace Vendr.Contrib.PaymentProviders
 
                 if (dibsEvent != null && dibsEvent.Event == "payment.checkout.completed")        
                 {
+                    var qs1 = request.QueryString;
+                    var qs2 = request.RequestContext.HttpContext.Request.QueryString;
+
+                    var status = request.QueryString["status"];
+
                     // Verify "Authorization" header returned from webhook
                     if (order.Properties["dibsEasyWebhookGuid"]?.Value == request.Headers["Authorization"])
                     {
