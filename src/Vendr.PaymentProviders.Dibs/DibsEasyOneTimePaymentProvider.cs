@@ -105,7 +105,24 @@ namespace Vendr.Contrib.PaymentProviders
                 if (order.TransactionAmount.Adjustments.Count > 0)
                 {
                     // Custom Price adjustments
-                    //var priceAdjustment = order.TransactionAmount.Adjustments.OfType<PriceAdjustment>();
+                    
+                    var priceAdjustments = order.TransactionAmount.Adjustments.OfType<PriceAdjustment>();
+
+                    if (priceAdjustments?.Any() == true)
+                    {
+                        foreach (var price in priceAdjustments)
+                        {
+                            items = items.Append(new DibsOrderItem
+                            {
+                                Reference = "",
+                                Name = price.Name,
+                                Quantity = 1,
+                                Unit = "pcs",
+                                GrossTotalAmount = -Math.Abs((int)AmountToMinorUnits(price.Price)),
+                            });
+                        }
+                    }
+
                     var discountAdjustments = order.TransactionAmount.Adjustments.OfType<DiscountAdjustment>();
                     if (discountAdjustments.Any())
                     {
