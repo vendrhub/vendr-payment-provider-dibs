@@ -54,7 +54,7 @@ namespace Vendr.Contrib.PaymentProviders
                 throw new Exception("Currency must be a valid ISO 4217 currency code: " + currency.Name);
             }
 
-            var orderAmount = AmountToMinorUnits(order.TotalPrice.Value.WithTax);
+            var orderAmount = AmountToMinorUnits(order.TransactionAmount.Value);
 
             var paymentMethods = settings.PaymentMethods?.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
                    .Where(x => !string.IsNullOrWhiteSpace(x))
