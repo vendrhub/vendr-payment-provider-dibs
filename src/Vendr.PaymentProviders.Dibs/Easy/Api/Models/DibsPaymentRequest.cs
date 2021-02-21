@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using System.Collections.Generic;
 
 namespace Vendr.PaymentProviders.Dibs.Easy.Api.Models
 {
@@ -70,6 +71,9 @@ namespace Vendr.PaymentProviders.Dibs.Easy.Api.Models
 
         [JsonProperty("authorization")]
         public string Authorization { get; set; }
+
+        [JsonProperty("headers")]
+        public Dictionary<string, string> Headers { get; set; }
     }
 
     public class DibsAppearance
