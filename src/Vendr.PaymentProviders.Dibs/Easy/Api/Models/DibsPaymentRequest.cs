@@ -41,6 +41,9 @@ namespace Vendr.PaymentProviders.Dibs.Easy.Api.Models
         [JsonProperty("integrationType")]
         public string IntegrationType { get; set; }
 
+        [JsonProperty("cancelUrl")]
+        public string CancelUrl { get; set; }
+
         [JsonProperty("returnUrl")]
         public string ReturnUrl { get; set; }
 

@@ -105,7 +105,7 @@ namespace Vendr.Contrib.PaymentProviders
                 if (order.TransactionAmount.Adjustments.Count > 0)
                 {
                     // Custom Price adjustments
-                    
+
                     var priceAdjustments = order.TransactionAmount.Adjustments.OfType<PriceAdjustment>();
 
                     if (priceAdjustments?.Any() == true)
@@ -190,6 +190,7 @@ namespace Vendr.Contrib.PaymentProviders
                     {
                         Charge = settings.AutoCapture,
                         IntegrationType = "HostedPaymentPage",
+                        CancelUrl = cancelUrl,
                         ReturnUrl = callbackUrl,
                         TermsUrl = settings.TermsUrl,
                         Appearance = new DibsAppearance
