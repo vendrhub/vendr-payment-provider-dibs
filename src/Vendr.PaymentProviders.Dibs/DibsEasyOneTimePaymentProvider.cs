@@ -82,6 +82,7 @@ namespace Vendr.Contrib.PaymentProviders
                     Unit = "pcs",
                     UnitPrice = (int)AmountToMinorUnits(x.UnitPrice.Value.WithoutTax),
                     TaxRate = (int)AmountToMinorUnits(x.TaxRate.Value * 100),
+                    TaxAmount = (int)AmountToMinorUnits(x.TotalPrice.Value.Tax),
                     GrossTotalAmount = (int)AmountToMinorUnits(x.TotalPrice.Value.WithTax),
                     NetTotalAmount = (int)AmountToMinorUnits(x.TotalPrice.Value.WithoutTax)
                 });
@@ -97,6 +98,7 @@ namespace Vendr.Contrib.PaymentProviders
                         Unit = "pcs",
                         UnitPrice = (int)AmountToMinorUnits(order.ShippingInfo.TotalPrice.Value.WithoutTax),
                         TaxRate = (int)AmountToMinorUnits(order.ShippingInfo.TaxRate.Value * 100),
+                        TaxAmount = (int)AmountToMinorUnits(order.ShippingInfo.TotalPrice.Value.Tax),
                         GrossTotalAmount = (int)AmountToMinorUnits(order.ShippingInfo.TotalPrice.Value.WithTax),
                         NetTotalAmount = (int)AmountToMinorUnits(order.ShippingInfo.TotalPrice.Value.WithoutTax)
                     });
@@ -117,6 +119,9 @@ namespace Vendr.Contrib.PaymentProviders
                                 Name = discount.DiscountName,
                                 Quantity = 1,
                                 Unit = "pcs",
+                                UnitPrice = (int)AmountToMinorUnits(discount.Price.WithoutTax),
+                                TaxRate = (int)AmountToMinorUnits(order.TaxRate.Value * 100),
+                                TaxAmount = (int)AmountToMinorUnits(discount.Price.Tax),
                                 GrossTotalAmount = (int)AmountToMinorUnits(discount.Price.WithTax),
                                 NetTotalAmount = (int)AmountToMinorUnits(discount.Price.WithoutTax)
                             });
@@ -139,6 +144,9 @@ namespace Vendr.Contrib.PaymentProviders
                                 Name = price.Name,
                                 Quantity = 1,
                                 Unit = "pcs",
+                                UnitPrice = (int)AmountToMinorUnits(price.Price.WithoutTax),
+                                TaxRate = (int)AmountToMinorUnits(order.TaxRate.Value * 100),
+                                TaxAmount = (int)AmountToMinorUnits(price.Price.Tax),
                                 GrossTotalAmount = (int)AmountToMinorUnits(price.Price.WithTax),
                                 NetTotalAmount = (int)AmountToMinorUnits(price.Price.WithoutTax)
                             });
@@ -157,6 +165,8 @@ namespace Vendr.Contrib.PaymentProviders
                                 Name = giftcard.GiftCardCode, //$"Gift Card - {giftcard.Code}",
                                 Quantity = 1,
                                 Unit = "pcs",
+                                UnitPrice = (int)AmountToMinorUnits(giftcard.Amount),
+                                TaxRate = (int)AmountToMinorUnits(order.TaxRate.Value * 100),
                                 GrossTotalAmount = (int)AmountToMinorUnits(giftcard.Amount),
                                 NetTotalAmount = (int)AmountToMinorUnits(giftcard.Amount)
                             });
@@ -216,6 +226,8 @@ namespace Vendr.Contrib.PaymentProviders
                         }
                     }
                 };
+
+                //var json = JsonConvert.SerializeObject(data);
 
                 // Create payment
                 var payment = client.CreatePayment(data);
