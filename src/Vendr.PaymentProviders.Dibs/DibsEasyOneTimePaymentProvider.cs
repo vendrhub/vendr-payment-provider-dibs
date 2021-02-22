@@ -102,6 +102,28 @@ namespace Vendr.Contrib.PaymentProviders
                     });
                 }
 
+                // Check adjustments on total price
+                if (order.TotalPrice.Adjustments.Count > 0)
+                {
+                    // Discounts
+                    var discountAdjustments = order.TotalPrice.Adjustments.OfType<DiscountAdjustment>();
+                    if (discountAdjustments.Any())
+                    {
+                        foreach (var discount in discountAdjustments)
+                        {
+                            items = items.Append(new DibsOrderItem
+                            {
+                                Reference = discount.DiscountId.ToString(),
+                                Name = discount.DiscountName,
+                                Quantity = 1,
+                                Unit = "pcs",
+                                GrossTotalAmount = (int)AmountToMinorUnits(discount.Price),
+                            });
+                        }
+                    }
+                }
+
+                // Check adjustments on transaction amount
                 if (order.TransactionAmount.Adjustments.Count > 0)
                 {
                     // Custom Price adjustments
@@ -117,23 +139,6 @@ namespace Vendr.Contrib.PaymentProviders
                                 Quantity = 1,
                                 Unit = "pcs",
                                 GrossTotalAmount = (int)AmountToMinorUnits(price.Price),
-                            });
-                        }
-                    }
-
-                    // Discount adjustments
-                    var discountAdjustments = order.TransactionAmount.Adjustments.OfType<DiscountAdjustment>();
-                    if (discountAdjustments.Any())
-                    {
-                        foreach (var discount in discountAdjustments)
-                        {
-                            items = items.Append(new DibsOrderItem
-                            {
-                                Reference = discount.DiscountId.ToString(),
-                                Name = discount.DiscountName,
-                                Quantity = 1,
-                                Unit = "pcs",
-                                GrossTotalAmount = (int)AmountToMinorUnits(discount.Price),
                             });
                         }
                     }
