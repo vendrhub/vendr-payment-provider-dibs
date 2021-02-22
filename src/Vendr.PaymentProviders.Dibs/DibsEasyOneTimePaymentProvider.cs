@@ -105,10 +105,8 @@ namespace Vendr.Contrib.PaymentProviders
                 if (order.TransactionAmount.Adjustments.Count > 0)
                 {
                     // Custom Price adjustments
-
                     var priceAdjustments = order.TransactionAmount.Adjustments.OfType<PriceAdjustment>();
-
-                    if (priceAdjustments?.Any() == true)
+                    if (priceAdjustments.Any())
                     {
                         foreach (var price in priceAdjustments)
                         {
@@ -123,6 +121,7 @@ namespace Vendr.Contrib.PaymentProviders
                         }
                     }
 
+                    // Discount adjustments
                     var discountAdjustments = order.TransactionAmount.Adjustments.OfType<DiscountAdjustment>();
                     if (discountAdjustments.Any())
                     {
@@ -148,7 +147,7 @@ namespace Vendr.Contrib.PaymentProviders
                             items = items.Append(new DibsOrderItem
                             {
                                 Reference = giftcard.GiftCardId.ToString(),
-                                Name = giftcard.GiftCardCode,
+                                Name = giftcard.GiftCardCode, //$"Gift Card - {giftcard.Code}",
                                 Quantity = 1,
                                 Unit = "pcs",
                                 GrossTotalAmount = (int)AmountToMinorUnits(giftcard.Amount),
@@ -156,21 +155,6 @@ namespace Vendr.Contrib.PaymentProviders
                         }
                     }
                 }
-
-                //if (order.GiftCards.Count > 0)
-                //{
-                //    foreach (var giftcard in order.GiftCards)
-                //    {
-                //        items = items.Append(new DibsOrderItem
-                //        {
-                //            Reference = giftcard.Code,
-                //            Name = $"Gift Card - {giftcard.Code}",
-                //            Quantity = 1,
-                //            Unit = "pcs",
-                //            GrossTotalAmount = -Math.Abs((int)AmountToMinorUnits(giftcard.Amount)),
-                //        });
-                //    }
-                //}
 
                 var data = new DibsPaymentRequest
                 {
