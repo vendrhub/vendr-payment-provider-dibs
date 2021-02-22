@@ -117,7 +117,8 @@ namespace Vendr.Contrib.PaymentProviders
                                 Name = discount.DiscountName,
                                 Quantity = 1,
                                 Unit = "pcs",
-                                GrossTotalAmount = (int)AmountToMinorUnits(discount.Price),
+                                GrossTotalAmount = (int)AmountToMinorUnits(discount.Price.WithTax),
+                                NetTotalAmount = (int)AmountToMinorUnits(discount.Price.WithoutTax)
                             });
                         }
                     }
@@ -138,7 +139,8 @@ namespace Vendr.Contrib.PaymentProviders
                                 Name = price.Name,
                                 Quantity = 1,
                                 Unit = "pcs",
-                                GrossTotalAmount = (int)AmountToMinorUnits(price.Price),
+                                GrossTotalAmount = (int)AmountToMinorUnits(price.Price.WithTax),
+                                NetTotalAmount = (int)AmountToMinorUnits(price.Price.WithoutTax)
                             });
                         }
                     }
@@ -156,6 +158,7 @@ namespace Vendr.Contrib.PaymentProviders
                                 Quantity = 1,
                                 Unit = "pcs",
                                 GrossTotalAmount = (int)AmountToMinorUnits(giftcard.Amount),
+                                NetTotalAmount = (int)AmountToMinorUnits(giftcard.Amount)
                             });
                         }
                     }
