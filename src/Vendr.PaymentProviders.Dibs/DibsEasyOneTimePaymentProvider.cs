@@ -211,29 +211,18 @@ namespace Vendr.Contrib.PaymentProviders
                             {
                                 EventName = "payment.checkout.completed",
                                 Url = callbackUrl.Replace("http://", "https://"), // Must be https 
-                                Authorization = webhookGuid.ToString()
+                                Authorization = webhookGuid.ToString(),
+                                // Need documentation from Dibs/Nets what headers are for.
+                                //Headers = new List<Dictionary<string, string>>
+                                //{
+                                //    new Dictionary<string, string>(1)
+                                //    {
+                                //        { "Referrer-Policy", "no-referrer-when-downgrade" }
+                                //    }
+                                //}
                             }
                         }
-                    } //,
-                    //PaymentMethods = new DibsPaymentMethod[]
-                    //{
-                    //    new DibsPaymentMethod
-                    //    {
-                    //        Name = paymentMethod?.Name,
-                    //        Fee = new DibsPaymentFee
-                    //        {
-                    //            Name = paymentMethod?.Name,
-                    //            Reference = paymentMethod?.Alias,
-                    //            Quantity = 1,
-                    //            Unit = "pcs",
-                    //            UnitPrice = (int)AmountToMinorUnits(order.PaymentInfo.TotalPrice.Value.WithoutTax),
-                    //            TaxAmount = (int)AmountToMinorUnits(order.PaymentInfo.TotalPrice.Value.Tax),
-                    //            TaxRate = (int)AmountToMinorUnits(order.PaymentInfo.TaxRate.Value * 100),
-                    //            GrossTotalAmount = (int)AmountToMinorUnits(order.PaymentInfo.TotalPrice.Value.WithTax),
-                    //            NetTotalAmount = (int)AmountToMinorUnits(order.PaymentInfo.TotalPrice.Value.WithoutTax)
-                    //        }
-                    //    }
-                    //}
+                    }
                 };
 
                 // Create payment

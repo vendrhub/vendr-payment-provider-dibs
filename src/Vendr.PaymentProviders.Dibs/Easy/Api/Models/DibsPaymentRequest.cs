@@ -76,7 +76,7 @@ namespace Vendr.PaymentProviders.Dibs.Easy.Api.Models
         public string Authorization { get; set; }
 
         [JsonProperty("headers")]
-        public Dictionary<string, string> Headers { get; set; }
+        public List<Dictionary<string, string>> Headers { get; set; }
     }
 
     public class DibsAppearance
