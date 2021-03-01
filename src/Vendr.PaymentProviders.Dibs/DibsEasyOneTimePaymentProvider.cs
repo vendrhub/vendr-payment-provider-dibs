@@ -132,23 +132,23 @@ namespace Vendr.Contrib.PaymentProviders
                 // Check adjustments on transaction amount
                 if (order.TransactionAmount.Adjustments.Count > 0)
                 {
-                    // Custom Price adjustments
-                    var priceAdjustments = order.TransactionAmount.Adjustments.OfType<PriceAdjustment>();
-                    if (priceAdjustments.Any())
+                    // Custom Amount adjustments
+                    var amountAdjustments = order.TransactionAmount.Adjustments.OfType<AmountAdjustment>();
+                    if (amountAdjustments.Any())
                     {
-                        foreach (var price in priceAdjustments)
+                        foreach (var amount in amountAdjustments)
                         {
                             items = items.Append(new DibsOrderItem
                             {
                                 Reference = "",
-                                Name = price.Name,
+                                Name = amount.Name,
                                 Quantity = 1,
                                 Unit = "pcs",
-                                UnitPrice = (int)AmountToMinorUnits(price.Price.WithoutTax),
+                                UnitPrice = (int)AmountToMinorUnits(amount.Amount),
                                 TaxRate = (int)AmountToMinorUnits(order.TaxRate.Value * 100),
-                                TaxAmount = (int)AmountToMinorUnits(price.Price.Tax),
-                                GrossTotalAmount = (int)AmountToMinorUnits(price.Price.WithTax),
-                                NetTotalAmount = (int)AmountToMinorUnits(price.Price.WithoutTax)
+                                TaxAmount = (int)AmountToMinorUnits(amount.Amount),
+                                GrossTotalAmount = (int)AmountToMinorUnits(amount.Amount),
+                                NetTotalAmount = (int)AmountToMinorUnits(amount.Amount)
                             });
                         }
                     }
