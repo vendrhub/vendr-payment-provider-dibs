@@ -107,28 +107,6 @@ namespace Vendr.Contrib.PaymentProviders
                 // Check adjustments on total price
                 if (order.TotalPrice.Adjustments.Count > 0)
                 {
-                    var priceAdjustments = order.TotalPrice.Adjustments.OfType<PriceAdjustment>();
-                    if (priceAdjustments.Any())
-                    {
-                        foreach (var adjustment in priceAdjustments)
-                        {
-                            var taxRate = (adjustment.Price.Tax / adjustment.Price.WithoutTax) * 100;
-
-                            items = items.Append(new DibsOrderItem
-                            {
-                                Reference = "",
-                                Name = adjustment.Name,
-                                Quantity = 1,
-                                Unit = "pcs",
-                                UnitPrice = (int)AmountToMinorUnits(adjustment.Price.WithoutTax),
-                                TaxRate = (int)AmountToMinorUnits(taxRate),
-                                TaxAmount = (int)AmountToMinorUnits(adjustment.Price.Tax),
-                                GrossTotalAmount = (int)AmountToMinorUnits(adjustment.Price.WithTax),
-                                NetTotalAmount = (int)AmountToMinorUnits(adjustment.Price.WithoutTax)
-                            });
-                        }
-                    }
-
                     // Discounts
                     var discountAdjustments = order.TotalPrice.Adjustments.OfType<DiscountAdjustment>();
                     if (discountAdjustments.Any())
@@ -148,6 +126,29 @@ namespace Vendr.Contrib.PaymentProviders
                                 TaxAmount = (int)AmountToMinorUnits(discount.Price.Tax),
                                 GrossTotalAmount = (int)AmountToMinorUnits(discount.Price.WithTax),
                                 NetTotalAmount = (int)AmountToMinorUnits(discount.Price.WithoutTax)
+                            });
+                        }
+                    }
+
+                    // Custom price adjustments
+                    var priceAdjustments = order.TotalPrice.Adjustments.Except(discountAdjustments).OfType<PriceAdjustment>();
+                    if (priceAdjustments.Any())
+                    {
+                        foreach (var adjustment in priceAdjustments)
+                        {
+                            var taxRate = (adjustment.Price.Tax / adjustment.Price.WithoutTax) * 100;
+                            
+                            items = items.Append(new DibsOrderItem
+                            {
+                                Reference = "",
+                                Name = adjustment.Name,
+                                Quantity = 1,
+                                Unit = "pcs",
+                                UnitPrice = (int)AmountToMinorUnits(adjustment.Price.WithoutTax),
+                                TaxRate = (int)AmountToMinorUnits(taxRate),
+                                TaxAmount = (int)AmountToMinorUnits(adjustment.Price.Tax),
+                                GrossTotalAmount = (int)AmountToMinorUnits(adjustment.Price.WithTax),
+                                NetTotalAmount = (int)AmountToMinorUnits(adjustment.Price.WithoutTax)
                             });
                         }
                     }
