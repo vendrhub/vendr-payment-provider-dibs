@@ -104,6 +104,56 @@ namespace Vendr.Contrib.PaymentProviders
                     });
                 }
 
+                // Check adjustments on subtotal price
+                if (order.SubtotalPrice.Adjustments.Count > 0)
+                {
+                    // Discounts
+                    var discountAdjustments = order.SubtotalPrice.Adjustments.OfType<DiscountAdjustment>();
+                    if (discountAdjustments.Any())
+                    {
+                        foreach (var discount in discountAdjustments)
+                        {
+                            var taxRate = (discount.Price.Tax / discount.Price.WithoutTax) * 100;
+
+                            items = items.Append(new DibsOrderItem
+                            {
+                                Reference = discount.DiscountId.ToString(),
+                                Name = discount.DiscountName,
+                                Quantity = 1,
+                                Unit = "pcs",
+                                UnitPrice = (int)AmountToMinorUnits(discount.Price.WithoutTax),
+                                TaxRate = (int)AmountToMinorUnits(taxRate),
+                                TaxAmount = (int)AmountToMinorUnits(discount.Price.Tax),
+                                GrossTotalAmount = (int)AmountToMinorUnits(discount.Price.WithTax),
+                                NetTotalAmount = (int)AmountToMinorUnits(discount.Price.WithoutTax)
+                            });
+                        }
+                    }
+
+                    // Custom price adjustments
+                    var priceAdjustments = order.SubtotalPrice.Adjustments.Except(discountAdjustments).OfType<PriceAdjustment>();
+                    if (priceAdjustments.Any())
+                    {
+                        foreach (var adjustment in priceAdjustments)
+                        {
+                            var taxRate = (adjustment.Price.Tax / adjustment.Price.WithoutTax) * 100;
+
+                            items = items.Append(new DibsOrderItem
+                            {
+                                Reference = "",
+                                Name = adjustment.Name,
+                                Quantity = 1,
+                                Unit = "pcs",
+                                UnitPrice = (int)AmountToMinorUnits(adjustment.Price.WithoutTax),
+                                TaxRate = (int)AmountToMinorUnits(taxRate),
+                                TaxAmount = (int)AmountToMinorUnits(adjustment.Price.Tax),
+                                GrossTotalAmount = (int)AmountToMinorUnits(adjustment.Price.WithTax),
+                                NetTotalAmount = (int)AmountToMinorUnits(adjustment.Price.WithoutTax)
+                            });
+                        }
+                    }
+                }
+
                 // Check adjustments on total price
                 if (order.TotalPrice.Adjustments.Count > 0)
                 {
@@ -137,7 +187,7 @@ namespace Vendr.Contrib.PaymentProviders
                         foreach (var adjustment in priceAdjustments)
                         {
                             var taxRate = (adjustment.Price.Tax / adjustment.Price.WithoutTax) * 100;
-                            
+
                             items = items.Append(new DibsOrderItem
                             {
                                 Reference = "",
