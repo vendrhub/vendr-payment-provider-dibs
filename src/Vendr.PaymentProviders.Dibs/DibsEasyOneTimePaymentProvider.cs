@@ -363,12 +363,12 @@ namespace Vendr.Contrib.PaymentProviders
                     var payment = !string.IsNullOrEmpty(paymentId) ? client.GetPayment(paymentId) : null;
                     if (payment != null)
                     {
-                        var amount = payment.Payment.OrderDetails.Amount;
+                        var amount = (long)payment.Payment.OrderDetails.Amount;
 
                         return CallbackResult.Ok(new TransactionInfo
                         {
                             TransactionId = paymentId,
-                            AmountAuthorized = order.TransactionAmount.Value,
+                            AmountAuthorized = AmountFromMinorUnits(amount),
                             PaymentStatus = GetPaymentStatus(payment)
                         });
                     }
