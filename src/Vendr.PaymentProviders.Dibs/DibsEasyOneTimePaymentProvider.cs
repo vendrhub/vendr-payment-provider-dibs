@@ -207,49 +207,49 @@ namespace Vendr.Contrib.PaymentProviders
                 }
 
                 // Check adjustments on transaction amount
-                //if (order.TransactionAmount.Adjustments.Count > 0)
-                //{
-                //    // Custom Amount adjustments
-                //    var amountAdjustments = order.TransactionAmount.Adjustments.OfType<AmountAdjustment>();
-                //    if (amountAdjustments.Any())
-                //    {
-                //        foreach (var amount in amountAdjustments)
-                //        {
-                //            items = items.Append(new DibsOrderItem
-                //            {
-                //                Reference = "",
-                //                Name = amount.Name,
-                //                Quantity = 1,
-                //                Unit = "pcs",
-                //                UnitPrice = (int)AmountToMinorUnits(amount.Amount),
-                //                TaxRate = (int)AmountToMinorUnits(order.TaxRate.Value * 100),
-                //                TaxAmount = (int)AmountToMinorUnits(amount.Amount),
-                //                GrossTotalAmount = (int)AmountToMinorUnits(amount.Amount),
-                //                NetTotalAmount = (int)AmountToMinorUnits(amount.Amount)
-                //            });
-                //        }
-                //    }
+                if (order.TransactionAmount.Adjustments.Count > 0)
+                {
+                    //    // Custom Amount adjustments
+                    //    var amountAdjustments = order.TransactionAmount.Adjustments.OfType<AmountAdjustment>();
+                    //    if (amountAdjustments.Any())
+                    //    {
+                    //        foreach (var amount in amountAdjustments)
+                    //        {
+                    //            items = items.Append(new DibsOrderItem
+                    //            {
+                    //                Reference = "",
+                    //                Name = amount.Name,
+                    //                Quantity = 1,
+                    //                Unit = "pcs",
+                    //                UnitPrice = (int)AmountToMinorUnits(amount.Amount),
+                    //                TaxRate = (int)AmountToMinorUnits(order.TaxRate.Value * 100),
+                    //                TaxAmount = (int)AmountToMinorUnits(amount.Amount),
+                    //                GrossTotalAmount = (int)AmountToMinorUnits(amount.Amount),
+                    //                NetTotalAmount = (int)AmountToMinorUnits(amount.Amount)
+                    //            });
+                    //        }
+                    //    }
 
-                //    // Gift Card adjustments
-                //    var giftCardAdjustments = order.TransactionAmount.Adjustments.OfType<GiftCardAdjustment>();
-                //    if (giftCardAdjustments.Any())
-                //    {
-                //        foreach (var giftcard in giftCardAdjustments)
-                //        {
-                //            items = items.Append(new DibsOrderItem
-                //            {
-                //                Reference = giftcard.GiftCardId.ToString(),
-                //                Name = giftcard.GiftCardCode, //$"Gift Card - {giftcard.Code}",
-                //                Quantity = 1,
-                //                Unit = "pcs",
-                //                UnitPrice = (int)AmountToMinorUnits(giftcard.Amount),
-                //                TaxRate = (int)AmountToMinorUnits(order.TaxRate.Value * 100),
-                //                GrossTotalAmount = (int)AmountToMinorUnits(giftcard.Amount),
-                //                NetTotalAmount = (int)AmountToMinorUnits(giftcard.Amount)
-                //            });
-                //        }
-                //    }
-                //}
+                    // Gift Card adjustments
+                    var giftCardAdjustments = order.TransactionAmount.Adjustments.OfType<GiftCardAdjustment>();
+                    if (giftCardAdjustments.Any())
+                    {
+                        foreach (var giftcard in giftCardAdjustments)
+                        {
+                            items = items.Append(new DibsOrderItem
+                            {
+                                Reference = giftcard.GiftCardId.ToString(),
+                                Name = giftcard.GiftCardCode, //$"Gift Card - {giftcard.Code}",
+                                Quantity = 1,
+                                Unit = "pcs",
+                                UnitPrice = (int)AmountToMinorUnits(giftcard.Amount),
+                                TaxRate = (int)AmountToMinorUnits(order.TaxRate.Value * 100),
+                                GrossTotalAmount = (int)AmountToMinorUnits(giftcard.Amount),
+                                NetTotalAmount = (int)AmountToMinorUnits(giftcard.Amount)
+                            });
+                        }
+                    }
+                }
 
                 var data = new DibsPaymentRequest
                 {
