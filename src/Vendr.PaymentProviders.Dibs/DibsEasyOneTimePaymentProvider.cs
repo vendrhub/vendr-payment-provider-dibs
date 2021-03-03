@@ -300,12 +300,36 @@ namespace Vendr.Contrib.PaymentProviders
                                 //        { "Referrer-Policy", "no-referrer-when-downgrade" }
                                 //    }
                                 //}
-                            }
+                            },
+                            //new DibsWebhook
+                            //{
+                            //    EventName = "payment.created",
+                            //    Url = ForceHttps(callbackUrl),
+                            //    Authorization = webhookGuid.ToString()
+                            //},
+                            //new DibsWebhook
+                            //{
+                            //    EventName = "payment.cancel.created",
+                            //    Url = ForceHttps(callbackUrl),
+                            //    Authorization = webhookGuid.ToString()
+                            //},
+                            //new DibsWebhook
+                            //{
+                            //    EventName = "payment.charge.created", // payment.charge.created.v2
+                            //    Url = ForceHttps(callbackUrl),
+                            //    Authorization = webhookGuid.ToString()
+                            //},
+                            //new DibsWebhook
+                            //{
+                            //    EventName = "payment.refund.completed", // payment.refund.initiated / payment.refund.initiated.v2
+                            //    Url = ForceHttps(callbackUrl),
+                            //    Authorization = webhookGuid.ToString()
+                            //}
                         }
                     }
                 };
 
-                var json = JsonConvert.SerializeObject(data);
+                //var json = JsonConvert.SerializeObject(data);
 
                 // Create payment
                 var payment = client.CreatePayment(data);
@@ -357,20 +381,23 @@ namespace Vendr.Contrib.PaymentProviders
 
                 var dibsEvent = GetDibsWebhookEvent(client, request, order.Properties["dibsEasyWebhookGuid"]?.Value);
 
-                if (dibsEvent != null && dibsEvent.Event == "payment.checkout.completed")        
+                if (dibsEvent != null)
                 {
-                    var paymentId = dibsEvent.Data?.SelectToken("paymentId")?.Value<string>();
-                    var payment = !string.IsNullOrEmpty(paymentId) ? client.GetPayment(paymentId) : null;
-                    if (payment != null)
+                    if (dibsEvent.Event == "payment.checkout.completed")
                     {
-                        var amount = (long)payment.Payment.OrderDetails.Amount;
-
-                        return CallbackResult.Ok(new TransactionInfo
+                        var paymentId = dibsEvent.Data?.SelectToken("paymentId")?.Value<string>();
+                        var payment = !string.IsNullOrEmpty(paymentId) ? client.GetPayment(paymentId) : null;
+                        if (payment != null)
                         {
-                            TransactionId = paymentId,
-                            AmountAuthorized = AmountFromMinorUnits(amount),
-                            PaymentStatus = GetPaymentStatus(payment)
-                        });
+                            var amount = (long)payment.Payment.OrderDetails.Amount;
+
+                            return CallbackResult.Ok(new TransactionInfo
+                            {
+                                TransactionId = paymentId,
+                                AmountAuthorized = AmountFromMinorUnits(amount),
+                                PaymentStatus = GetPaymentStatus(payment)
+                            });
+                        }
                     }
                 }
             }
@@ -618,6 +645,17 @@ namespace Vendr.Contrib.PaymentProviders
 
             if (request.Headers["Authorization"] != webhookAuthorization)
                 throw new Exception("The authorization in the webhook event could not be verified.");
+        }
+
+        public static string ForceHttps(string url)
+        {
+            var uri = new UriBuilder(url);
+
+            var hadDefaultPort = uri.Uri.IsDefaultPort;
+            uri.Scheme = Uri.UriSchemeHttps;
+            uri.Port = hadDefaultPort ? -1 : uri.Port;
+
+            return uri.ToString();
         }
 
     }
