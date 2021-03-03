@@ -209,27 +209,6 @@ namespace Vendr.Contrib.PaymentProviders
                 // Check adjustments on transaction amount
                 if (order.TransactionAmount.Adjustments.Count > 0)
                 {
-                    //    // Custom Amount adjustments
-                    //    var amountAdjustments = order.TransactionAmount.Adjustments.OfType<AmountAdjustment>();
-                    //    if (amountAdjustments.Any())
-                    //    {
-                    //        foreach (var amount in amountAdjustments)
-                    //        {
-                    //            items = items.Append(new DibsOrderItem
-                    //            {
-                    //                Reference = "",
-                    //                Name = amount.Name,
-                    //                Quantity = 1,
-                    //                Unit = "pcs",
-                    //                UnitPrice = (int)AmountToMinorUnits(amount.Amount),
-                    //                TaxRate = (int)AmountToMinorUnits(order.TaxRate.Value * 100),
-                    //                TaxAmount = (int)AmountToMinorUnits(amount.Amount),
-                    //                GrossTotalAmount = (int)AmountToMinorUnits(amount.Amount),
-                    //                NetTotalAmount = (int)AmountToMinorUnits(amount.Amount)
-                    //            });
-                    //        }
-                    //    }
-
                     // Gift Card adjustments
                     var giftCardAdjustments = order.TransactionAmount.Adjustments.OfType<GiftCardAdjustment>();
                     if (giftCardAdjustments.Any())
@@ -246,6 +225,28 @@ namespace Vendr.Contrib.PaymentProviders
                                 TaxRate = (int)AmountToMinorUnits(order.TaxRate.Value * 100),
                                 GrossTotalAmount = (int)AmountToMinorUnits(giftcard.Amount),
                                 NetTotalAmount = (int)AmountToMinorUnits(giftcard.Amount)
+                            });
+                        }
+                    }
+
+                    // Custom Amount adjustments
+                    var amountAdjustments = order.TransactionAmount.Adjustments.Except(giftCardAdjustments).OfType<AmountAdjustment>();
+                    if (amountAdjustments.Any())
+                    {
+                        foreach (var amount in amountAdjustments)
+                        {
+                            var reference = Guid.NewGuid().ToString();
+
+                            items = items.Append(new DibsOrderItem
+                            {
+                                Reference = reference,
+                                Name = amount.Name,
+                                Quantity = 1,
+                                Unit = "pcs",
+                                UnitPrice = (int)AmountToMinorUnits(amount.Amount),
+                                TaxRate = (int)AmountToMinorUnits(order.TaxRate.Value * 100),
+                                GrossTotalAmount = (int)AmountToMinorUnits(amount.Amount),
+                                NetTotalAmount = (int)AmountToMinorUnits(amount.Amount)
                             });
                         }
                     }
@@ -270,7 +271,7 @@ namespace Vendr.Contrib.PaymentProviders
                         Charge = settings.AutoCapture,
                         IntegrationType = "HostedPaymentPage",
                         CancelUrl = cancelUrl,
-                        ReturnUrl = callbackUrl,
+                        ReturnUrl = continueUrl,
                         TermsUrl = settings.TermsUrl,
                         Appearance = new DibsAppearance
                         {
@@ -304,7 +305,7 @@ namespace Vendr.Contrib.PaymentProviders
                     }
                 };
 
-                //var json = JsonConvert.SerializeObject(data);
+                var json = JsonConvert.SerializeObject(data);
 
                 // Create payment
                 var payment = client.CreatePayment(data);
@@ -339,50 +340,9 @@ namespace Vendr.Contrib.PaymentProviders
                 MetaData = new Dictionary<string, string>
                 {
                     { "dibsEasyPaymentId", paymentId },
-                    { "dibsEasyWebhookGuid", webhookGuid.ToString() },
-                    { "dibsEasyContinueUrl", continueUrl },
-                    { "dibsEasyCancelUrl", cancelUrl }
+                    { "dibsEasyWebhookGuid", webhookGuid.ToString() }
                 },
                 Form = new PaymentForm(paymentFormLink, FormMethod.Get)
-
-                // Embedded checkout
-                //Form = new PaymentForm(continueUrl, FormMethod.Get)
-                //            .WithAttribute("onsubmit", "return handleDibsEasyCheckout(event)")
-                //            .WithJsFile($"https://{(settings.TestMode ? "test." : "")}checkout.dibspayment.eu/v1/checkout.js?v=1")
-                //            .WithJs(@"
-
-                //                window.handleDibsEasyCheckout = function (e) {
-                //                    e.preventDefault();
-
-                //                    //var elem = document.createElement('div');
-                //                    //elem.id = 'dibs-complete-checkout';
-                //                    //document.body.appendChild(elem);
-
-                //                    var checkoutOptions = {
-                //                        checkoutKey: '" + checkoutKey + @"',
-                //                        paymentId : '" + paymentId + @"',
-                //                        //containerId: 'dibs-complete-checkout',
-                //                        language: 'en-GB',
-                //                        theme: {
-                //                            textColor: 'blue'
-                //                        }
-                //                    };
-
-                //                    var checkout = new Dibs.Checkout(checkoutOptions);
-
-                //                    // Success
-                //                    checkout.on('payment-completed', function(response) {
-                //                        window.location = '" + continueUrl + @"' + '&paymentId=' + response.paymentId;
-                //                    });
-
-                //                    // Cancel
-                //                    checkout.on('payment-declined', function(response) {
-                //                        window.location = '" + cancelUrl + @"' + '&paymentId=' + response.paymentId;
-                //                    });
-
-                //                    return false;
-                //                }
-                //            ")
             };
         }
 
@@ -403,31 +363,14 @@ namespace Vendr.Contrib.PaymentProviders
                     var payment = !string.IsNullOrEmpty(paymentId) ? client.GetPayment(paymentId) : null;
                     if (payment != null)
                     {
-                        var continueUrl = order.Properties["dibsEasyContinueUrl"]?.Value;
+                        var amount = payment.Payment.OrderDetails.Amount;
 
-                        var successResponse = new HttpResponseMessage(HttpStatusCode.Moved) // or HttpStatusCode.Redirect
+                        return CallbackResult.Ok(new TransactionInfo
                         {
-                            Content = new StringContent("")
-                        };
-                        successResponse.Headers.Location = new Uri(continueUrl);
-
-                        return new CallbackResult
-                        {
-                            HttpResponse = successResponse,
-                            TransactionInfo = new TransactionInfo
-                            {
-                                TransactionId = paymentId,
-                                AmountAuthorized = order.TotalPrice.Value.WithTax,
-                                PaymentStatus = GetPaymentStatus(payment)
-                            }
-                        };
-
-                        //return CallbackResult.Ok(new TransactionInfo
-                        //{
-                        //    TransactionId = paymentId,
-                        //    AmountAuthorized = order.TotalPrice.Value.WithTax,
-                        //    PaymentStatus = GetPaymentStatus(payment)
-                        //});
+                            TransactionId = paymentId,
+                            AmountAuthorized = order.TransactionAmount.Value,
+                            PaymentStatus = GetPaymentStatus(payment)
+                        });
                     }
                 }
             }
@@ -436,20 +379,7 @@ namespace Vendr.Contrib.PaymentProviders
                 Vendr.Log.Error<DibsEasyOneTimePaymentProvider>(ex, "Dibs Easy - ProcessCallback");
             }
 
-            var errorUrl = order.Properties["dibsEasyCancelUrl"]?.Value;
-
-            var errorResponse = new HttpResponseMessage(HttpStatusCode.Redirect)
-            {
-                Content = new StringContent("")
-            };
-            errorResponse.Headers.Location = new Uri(errorUrl);
-
-            return new CallbackResult
-            {
-                HttpResponse = errorResponse
-            };
-
-            // return CallbackResult.BadRequest();
+            return CallbackResult.BadRequest();
         }
 
         public override ApiResult FetchPaymentStatus(OrderReadOnly order, DibsEasyOneTimeSettings settings)
