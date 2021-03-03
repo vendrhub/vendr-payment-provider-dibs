@@ -136,11 +136,12 @@ namespace Vendr.Contrib.PaymentProviders
                     {
                         foreach (var adjustment in priceAdjustments)
                         {
+                            var reference = Guid.NewGuid().ToString();
                             var taxRate = (adjustment.Price.Tax / adjustment.Price.WithoutTax) * 100;
 
                             items = items.Append(new DibsOrderItem
                             {
-                                Reference = "",
+                                Reference = reference,
                                 Name = adjustment.Name,
                                 Quantity = 1,
                                 Unit = "pcs",
@@ -186,11 +187,12 @@ namespace Vendr.Contrib.PaymentProviders
                     {
                         foreach (var adjustment in priceAdjustments)
                         {
+                            var reference = Guid.NewGuid().ToString();
                             var taxRate = (adjustment.Price.Tax / adjustment.Price.WithoutTax) * 100;
 
                             items = items.Append(new DibsOrderItem
                             {
-                                Reference = "",
+                                Reference = reference,
                                 Name = adjustment.Name,
                                 Quantity = 1,
                                 Unit = "pcs",
