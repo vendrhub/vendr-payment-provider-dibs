@@ -392,48 +392,40 @@ namespace Vendr.Contrib.PaymentProviders
                 
                 var clientConfig = GetDibsEasyClientConfig(settings);
                 var client = new DibsEasyClient(clientConfig);
-                var dibsEvent = GetDibsWebhookEvent(client, request);
+
+                var dibsEvent = GetDibsWebhookEvent(client, request, order.Properties["dibsEasyWebhookGuid"]?.Value);
 
                 if (dibsEvent != null && dibsEvent.Event == "payment.checkout.completed")        
                 {
-                    var qs1 = request.QueryString;
-                    var qs2 = request.RequestContext.HttpContext.Request.QueryString;
-
-                    var status = request.QueryString["status"];
-
-                    // Verify "Authorization" header returned from webhook
-                    if (order.Properties["dibsEasyWebhookGuid"]?.Value == request.Headers["Authorization"])
+                    var paymentId = dibsEvent.Data?.SelectToken("paymentId")?.Value<string>();
+                    var payment = !string.IsNullOrEmpty(paymentId) ? client.GetPayment(paymentId) : null;
+                    if (payment != null)
                     {
-                        var paymentId = dibsEvent.Data?.SelectToken("paymentId")?.Value<string>();
-                        var payment = !string.IsNullOrEmpty(paymentId) ? client.GetPayment(paymentId) : null;
-                        if (payment != null)
+                        var continueUrl = order.Properties["dibsEasyContinueUrl"]?.Value;
+
+                        var successResponse = new HttpResponseMessage(HttpStatusCode.Moved) // or HttpStatusCode.Redirect
                         {
-                            var continueUrl = order.Properties["dibsEasyContinueUrl"]?.Value;
+                            Content = new StringContent("")
+                        };
+                        successResponse.Headers.Location = new Uri(continueUrl);
 
-                            var successResponse = new HttpResponseMessage(HttpStatusCode.Moved) // or HttpStatusCode.Redirect
+                        return new CallbackResult
+                        {
+                            HttpResponse = successResponse,
+                            TransactionInfo = new TransactionInfo
                             {
-                                Content = new StringContent("")
-                            };
-                            successResponse.Headers.Location = new Uri(continueUrl);
+                                TransactionId = paymentId,
+                                AmountAuthorized = order.TotalPrice.Value.WithTax,
+                                PaymentStatus = GetPaymentStatus(payment)
+                            }
+                        };
 
-                            return new CallbackResult
-                            {
-                                HttpResponse = successResponse,
-                                TransactionInfo = new TransactionInfo
-                                {
-                                    TransactionId = paymentId,
-                                    AmountAuthorized = order.TotalPrice.Value.WithTax,
-                                    PaymentStatus = GetPaymentStatus(payment)
-                                }
-                            };
-
-                            //return CallbackResult.Ok(new TransactionInfo
-                            //{
-                            //    TransactionId = paymentId,
-                            //    AmountAuthorized = order.TotalPrice.Value.WithTax,
-                            //    PaymentStatus = GetPaymentStatus(payment)
-                            //});
-                        }
+                        //return CallbackResult.Ok(new TransactionInfo
+                        //{
+                        //    TransactionId = paymentId,
+                        //    AmountAuthorized = order.TotalPrice.Value.WithTax,
+                        //    PaymentStatus = GetPaymentStatus(payment)
+                        //});
                     }
                 }
             }
@@ -648,7 +640,7 @@ namespace Vendr.Contrib.PaymentProviders
             };
         }
 
-        protected DibsWebhookEvent GetDibsWebhookEvent(DibsEasyClient client, HttpRequestBase request)
+        protected DibsWebhookEvent GetDibsWebhookEvent(DibsEasyClient client, HttpRequestBase request, string webhookAuthorization)
         {
             DibsWebhookEvent dibsWebhookEvent = null;
 
@@ -669,6 +661,9 @@ namespace Vendr.Contrib.PaymentProviders
 
                         if (!string.IsNullOrEmpty(json))
                         {
+                            // Verify "Authorization" header returned from webhook
+                            VerifyAuthorization(request, webhookAuthorization);
+
                             dibsWebhookEvent = JsonConvert.DeserializeObject<DibsWebhookEvent>(json);
                         }
                     }
@@ -682,6 +677,15 @@ namespace Vendr.Contrib.PaymentProviders
             }
 
             return dibsWebhookEvent;
+        }
+
+        private void VerifyAuthorization(HttpRequestBase request, string webhookAuthorization)
+        {
+            if (request.Headers["Authorization"] == null)
+                throw new Exception("The authorization header is not present in the webhook event.");
+
+            if (request.Headers["Authorization"] != webhookAuthorization)
+                throw new Exception("The authorization in the webhook event could not be verified.");
         }
 
     }
