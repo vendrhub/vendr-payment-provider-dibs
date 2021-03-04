@@ -109,6 +109,7 @@
     <Compile Include="DibsSettings.cs" />
     <Compile Include="Easy\Api\Models\DibsRefund.cs" />
     <Compile Include="Easy\Api\Models\DibsWebhookEvent.cs" />
+    <Compile Include="Easy\Api\Models\DibsEvents.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Properties\VersionInfo.cs" />
     <Compile Include="DibsEasyOneTimePaymentProvider.cs" />

@@ -40,7 +40,7 @@ namespace Vendr.Contrib.PaymentProviders
             new TransactionMetaDataDefinition("dibsEasyPaymentId", "Dibs (Easy) Payment ID"),
             new TransactionMetaDataDefinition("dibsEasyChargeId", "Dibs (Easy) Charge ID"),
             new TransactionMetaDataDefinition("dibsEasyRefundId", "Dibs (Easy) Refund ID"),
-            new TransactionMetaDataDefinition("dibsEasyWebhookGuid", "Dibs (Easy) Webhook Guid")
+            new TransactionMetaDataDefinition("dibsEasyWebhookAuthKey", "Dibs (Easy) Webhook Authorization")
         };
 
         public override PaymentFormResult GenerateForm(OrderReadOnly order, string continueUrl, string cancelUrl, string callbackUrl, DibsEasyOneTimeSettings settings)
@@ -67,7 +67,7 @@ namespace Vendr.Contrib.PaymentProviders
             string paymentId = string.Empty;
             string paymentFormLink = string.Empty;
 
-            var webhookGuid = Guid.NewGuid();
+            var webhookAuthKey = Guid.NewGuid().ToString();
 
             try
             {
@@ -289,9 +289,9 @@ namespace Vendr.Contrib.PaymentProviders
                         {
                             new DibsWebhook
                             {
-                                EventName = "payment.checkout.completed",
+                                EventName = DibsEvents.PaymentCheckoutCompleted,
                                 Url = callbackUrl.Replace("http://", "https://"), // Must be https 
-                                Authorization = webhookGuid.ToString(),
+                                Authorization = webhookAuthKey,
                                 // Need documentation from Dibs/Nets what headers are for.
                                 //Headers = new List<Dictionary<string, string>>
                                 //{
@@ -301,35 +301,27 @@ namespace Vendr.Contrib.PaymentProviders
                                 //    }
                                 //}
                             },
-                            //new DibsWebhook
-                            //{
-                            //    EventName = "payment.created",
-                            //    Url = ForceHttps(callbackUrl),
-                            //    Authorization = webhookGuid.ToString()
-                            //},
-                            //new DibsWebhook
-                            //{
-                            //    EventName = "payment.cancel.created",
-                            //    Url = ForceHttps(callbackUrl),
-                            //    Authorization = webhookGuid.ToString()
-                            //},
-                            //new DibsWebhook
-                            //{
-                            //    EventName = "payment.charge.created", // payment.charge.created.v2
-                            //    Url = ForceHttps(callbackUrl),
-                            //    Authorization = webhookGuid.ToString()
-                            //},
-                            //new DibsWebhook
-                            //{
-                            //    EventName = "payment.refund.completed", // payment.refund.initiated / payment.refund.initiated.v2
-                            //    Url = ForceHttps(callbackUrl),
-                            //    Authorization = webhookGuid.ToString()
-                            //}
+                            new DibsWebhook
+                            {
+                                EventName = DibsEvents.PaymentChargeCreated,
+                                Url = ForceHttps(callbackUrl),
+                                Authorization = webhookAuthKey
+                            },
+                            new DibsWebhook
+                            {
+                                EventName = DibsEvents.PaymentRefundCompleted,
+                                Url = ForceHttps(callbackUrl),
+                                Authorization = webhookAuthKey
+                            },
+                            new DibsWebhook
+                            {
+                                EventName = DibsEvents.PaymentCancelCreated,
+                                Url = ForceHttps(callbackUrl),
+                                Authorization = webhookAuthKey
+                            }
                         }
                     }
                 };
-
-                //var json = JsonConvert.SerializeObject(data);
 
                 // Create payment
                 var payment = client.CreatePayment(data);
@@ -364,7 +356,7 @@ namespace Vendr.Contrib.PaymentProviders
                 MetaData = new Dictionary<string, string>
                 {
                     { "dibsEasyPaymentId", paymentId },
-                    { "dibsEasyWebhookGuid", webhookGuid.ToString() }
+                    { "dibsEasyWebhookAuthKey", webhookAuthKey }
                 },
                 Form = new PaymentForm(paymentFormLink, FormMethod.Get)
             };
@@ -379,24 +371,60 @@ namespace Vendr.Contrib.PaymentProviders
                 var clientConfig = GetDibsEasyClientConfig(settings);
                 var client = new DibsEasyClient(clientConfig);
 
-                var dibsEvent = GetDibsWebhookEvent(client, request, order.Properties["dibsEasyWebhookGuid"]?.Value);
+                var dibsEvent = GetDibsWebhookEvent(client, request, order.Properties["dibsEasyWebhookAuthKey"]?.Value);
 
                 if (dibsEvent != null)
                 {
-                    if (dibsEvent.Event == "payment.checkout.completed")
+                    var paymentId = dibsEvent.Data?.SelectToken("paymentId")?.Value<string>();
+
+                    if (!string.IsNullOrEmpty(paymentId))
                     {
-                        var paymentId = dibsEvent.Data?.SelectToken("paymentId")?.Value<string>();
                         var payment = !string.IsNullOrEmpty(paymentId) ? client.GetPayment(paymentId) : null;
                         if (payment != null)
                         {
                             var amount = (long)payment.Payment.OrderDetails.Amount;
 
-                            return CallbackResult.Ok(new TransactionInfo
+                            if (dibsEvent.Event == DibsEvents.PaymentCheckoutCompleted)
                             {
-                                TransactionId = paymentId,
-                                AmountAuthorized = AmountFromMinorUnits(amount),
-                                PaymentStatus = GetPaymentStatus(payment)
-                            });
+                                //var amount = dibsEvent.Data.SelectToken("amount").SelectToken("paymentId").Value<long>();
+
+                                return CallbackResult.Ok(new TransactionInfo
+                                {
+                                    TransactionId = paymentId,
+                                    AmountAuthorized = AmountFromMinorUnits(amount),
+                                    PaymentStatus = GetPaymentStatus(payment)
+                                });
+                            }
+
+                            if (dibsEvent.Event == DibsEvents.PaymentChargeCreated)
+                            {
+                                return CallbackResult.Ok(new TransactionInfo
+                                {
+                                    TransactionId = paymentId,
+                                    AmountAuthorized = AmountFromMinorUnits(amount),
+                                    PaymentStatus = GetPaymentStatus(payment)
+                                });
+                            }
+
+                            if (dibsEvent.Event == DibsEvents.PaymentRefundCompleted)
+                            {
+                                return CallbackResult.Ok(new TransactionInfo
+                                {
+                                    TransactionId = paymentId,
+                                    AmountAuthorized = AmountFromMinorUnits(amount),
+                                    PaymentStatus = GetPaymentStatus(payment)
+                                });
+                            }
+
+                            if (dibsEvent.Event == DibsEvents.PaymentCancelCreated)
+                            {
+                                return CallbackResult.Ok(new TransactionInfo
+                                {
+                                    TransactionId = paymentId,
+                                    AmountAuthorized = AmountFromMinorUnits(amount),
+                                    PaymentStatus = GetPaymentStatus(payment)
+                                });
+                            }
                         }
                     }
                 }
