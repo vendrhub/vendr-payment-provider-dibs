@@ -40,6 +40,7 @@ namespace Vendr.Contrib.PaymentProviders
             new TransactionMetaDataDefinition("dibsEasyPaymentId", "Dibs (Easy) Payment ID"),
             new TransactionMetaDataDefinition("dibsEasyChargeId", "Dibs (Easy) Charge ID"),
             new TransactionMetaDataDefinition("dibsEasyRefundId", "Dibs (Easy) Refund ID"),
+            new TransactionMetaDataDefinition("dibsEasyCancelId", "Dibs (Easy) Cancel ID"),
             new TransactionMetaDataDefinition("dibsEasyWebhookAuthKey", "Dibs (Easy) Webhook Authorization")
         };
 
@@ -377,54 +378,64 @@ namespace Vendr.Contrib.PaymentProviders
                 {
                     var paymentId = dibsEvent.Data?.SelectToken("paymentId")?.Value<string>();
 
-                    if (!string.IsNullOrEmpty(paymentId))
+                    var payment = !string.IsNullOrEmpty(paymentId) ? client.GetPayment(paymentId) : null;
+                    if (payment != null)
                     {
-                        var payment = !string.IsNullOrEmpty(paymentId) ? client.GetPayment(paymentId) : null;
-                        if (payment != null)
+                        var amount = (long)payment.Payment.OrderDetails.Amount;
+
+                        if (dibsEvent.Event == DibsEvents.PaymentCheckoutCompleted)
                         {
-                            var amount = (long)payment.Payment.OrderDetails.Amount;
-
-                            if (dibsEvent.Event == DibsEvents.PaymentCheckoutCompleted)
+                            return CallbackResult.Ok(new TransactionInfo
                             {
-                                //var amount = dibsEvent.Data.SelectToken("amount").SelectToken("paymentId").Value<long>();
+                                TransactionId = paymentId,
+                                AmountAuthorized = AmountFromMinorUnits(amount),
+                                PaymentStatus = GetPaymentStatus(payment)
+                            });
+                        }
+                        else if (dibsEvent.Event == DibsEvents.PaymentChargeCreated)
+                        {
+                            var chargeId = dibsEvent.Data?.SelectToken("chargeId")?.Value<string>();
 
-                                return CallbackResult.Ok(new TransactionInfo
-                                {
-                                    TransactionId = paymentId,
-                                    AmountAuthorized = AmountFromMinorUnits(amount),
-                                    PaymentStatus = GetPaymentStatus(payment)
-                                });
-                            }
-
-                            if (dibsEvent.Event == DibsEvents.PaymentChargeCreated)
+                            return CallbackResult.Ok(new TransactionInfo
                             {
-                                return CallbackResult.Ok(new TransactionInfo
-                                {
-                                    TransactionId = paymentId,
-                                    AmountAuthorized = AmountFromMinorUnits(amount),
-                                    PaymentStatus = GetPaymentStatus(payment)
-                                });
-                            }
-
-                            if (dibsEvent.Event == DibsEvents.PaymentRefundCompleted)
+                                TransactionId = paymentId,
+                                AmountAuthorized = AmountFromMinorUnits(amount),
+                                PaymentStatus = GetPaymentStatus(payment)
+                            },
+                            new Dictionary<string, string>
                             {
-                                return CallbackResult.Ok(new TransactionInfo
-                                {
-                                    TransactionId = paymentId,
-                                    AmountAuthorized = AmountFromMinorUnits(amount),
-                                    PaymentStatus = GetPaymentStatus(payment)
-                                });
-                            }
+                                { "dibsEasyChargeId", chargeId }
+                            });
+                        }
+                        else if (dibsEvent.Event == DibsEvents.PaymentCancelCreated)
+                        {
+                            var cancelId = dibsEvent.Data?.SelectToken("cancelId")?.Value<string>();
 
-                            if (dibsEvent.Event == DibsEvents.PaymentCancelCreated)
+                            return CallbackResult.Ok(new TransactionInfo
                             {
-                                return CallbackResult.Ok(new TransactionInfo
-                                {
-                                    TransactionId = paymentId,
-                                    AmountAuthorized = AmountFromMinorUnits(amount),
-                                    PaymentStatus = GetPaymentStatus(payment)
-                                });
-                            }
+                                TransactionId = paymentId,
+                                AmountAuthorized = AmountFromMinorUnits(amount),
+                                PaymentStatus = GetPaymentStatus(payment)
+                            },
+                            new Dictionary<string, string>
+                            {
+                                { "dibsEasyCancelId", cancelId }
+                            });
+                        }
+                        else if (dibsEvent.Event == DibsEvents.PaymentRefundCompleted)
+                        {
+                            var refundId = dibsEvent.Data?.SelectToken("refundId")?.Value<string>();
+
+                            return CallbackResult.Ok(new TransactionInfo
+                            {
+                                TransactionId = paymentId,
+                                AmountAuthorized = AmountFromMinorUnits(amount),
+                                PaymentStatus = GetPaymentStatus(payment)
+                            },
+                            new Dictionary<string, string>
+                            {
+                                { "dibsEasyRefundId", refundId }
+                            });
                         }
                     }
                 }
