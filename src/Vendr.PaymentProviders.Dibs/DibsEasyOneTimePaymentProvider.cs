@@ -290,7 +290,7 @@ namespace Vendr.Contrib.PaymentProviders
                             new DibsWebhook
                             {
                                 EventName = DibsEvents.PaymentCheckoutCompleted,
-                                Url = callbackUrl.Replace("http://", "https://"), // Must be https 
+                                Url = ForceHttps(callbackUrl), // Must be https 
                                 Authorization = webhookAuthKey,
                                 // Need documentation from Dibs/Nets what headers are for.
                                 //Headers = new List<Dictionary<string, string>>
