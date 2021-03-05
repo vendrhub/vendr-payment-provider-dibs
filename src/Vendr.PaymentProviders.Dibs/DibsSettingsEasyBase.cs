@@ -10,7 +10,7 @@ namespace Vendr.PaymentProviders.Dibs
         public string PaymentMethods { get; set; }
 
         [PaymentProviderSetting(Name = "Billing Company Property Alias",
-            Description = "The order property alias containing company of the billing address.",
+            Description = "The order property alias containing company of the billing address (optional).",
             SortOrder = 1100)]
         public string BillingCompanyPropertyAlias { get; set; }
 
