@@ -452,7 +452,6 @@ namespace Vendr.Contrib.PaymentProviders
                 var client = new DibsEasyClient(clientConfig);
 
                 var dibsEvent = GetDibsWebhookEvent(client, request, webhookAuthKey);
-
                 if (dibsEvent != null)
                 {
                     var paymentId = dibsEvent.Data?.SelectToken("paymentId")?.Value<string>();
