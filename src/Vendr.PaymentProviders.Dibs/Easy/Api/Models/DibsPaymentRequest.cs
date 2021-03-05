@@ -8,9 +8,6 @@ namespace Vendr.PaymentProviders.Dibs.Easy.Api.Models
         [JsonProperty("order")]
         public DibsOrder Order { get; set; }
 
-        [JsonProperty("consumer")]
-        public DibsConsumer Consumer { get; set; }
-
         [JsonProperty("checkout")]
         public DibsCheckout Checkout { get; set; }
 
@@ -29,11 +26,44 @@ namespace Vendr.PaymentProviders.Dibs.Easy.Api.Models
         [JsonProperty("email")]
         public string Email { get; set; }
 
+        [JsonProperty("shippingAddress")]
+        public DibsAddress ShippingAddress { get; set; }
+
+        [JsonProperty("phoneNumber")]
+        public DibsCustomerPhone PhoneNumber { get; set; }
+
         [JsonProperty("privatePerson")]
         public DibsCustomerName PrivatePerson { get; set; }
 
         [JsonProperty("company")]
         public DibsCompany Company { get; set; }
+    }
+
+    public class DibsAddress
+    {
+        [JsonProperty("addressLine1")]
+        public string Line1 { get; set; }
+
+        [JsonProperty("addressLine2")]
+        public string Line2 { get; set; }
+
+        [JsonProperty("postalCode")]
+        public string PostalCode { get; set; }
+
+        [JsonProperty("city")]
+        public string City { get; set; }
+
+        [JsonProperty("country")]
+        public string Country { get; set; }
+    }
+
+    public class DibsCustomerPhone
+    {
+        [JsonProperty("prefix")]
+        public string Prefix { get; set; }
+
+        [JsonProperty("number")]
+        public string Number { get; set; }
     }
 
     public class DibsCustomerName

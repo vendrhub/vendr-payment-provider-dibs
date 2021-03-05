@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Text.RegularExpressions;
 using System.Web;
 using System.Web.Mvc;
 using Vendr.Contrib.PaymentProviders.Dibs.Easy.Api.Models;
@@ -253,15 +254,67 @@ namespace Vendr.Contrib.PaymentProviders
                     }
                 }
 
-                var consumer = new DibsConsumer();
+                string company = !string.IsNullOrWhiteSpace(settings.BillingCompanyPropertyAlias)
+                    ? order.Properties[settings.BillingCompanyPropertyAlias]
+                    : string.Empty;
+
+                var country = order.ShippingInfo.CountryId.HasValue
+                    ? Vendr.Services.CountryService.GetCountry(order.ShippingInfo.CountryId.Value)
+                    : null;
+
+                var region = country != null ? new RegionInfo(country.Code) : null;
+                var countryIsoCode = region?.ThreeLetterISORegionName;
+
+                // If only partial data about the consumer is sent,
+                // then the consumer will not be created in Easy.
+
+                var consumer = new DibsConsumer
+                {
+                    Reference = order.CustomerInfo.CustomerReference,
+                    Email = order.CustomerInfo.Email,
+                    ShippingAddress = new DibsAddress
+                    {
+                        Line1 = !string.IsNullOrWhiteSpace(settings.ShippingAddressLine1PropertyAlias)
+                            ? order.Properties[settings.ShippingAddressLine1PropertyAlias] : "",
+                        Line2 = !string.IsNullOrWhiteSpace(settings.ShippingAddressLine2PropertyAlias)
+                            ? order.Properties[settings.ShippingAddressLine2PropertyAlias] : "",
+                        PostalCode = !string.IsNullOrWhiteSpace(settings.ShippingAddressZipCodePropertyAlias)
+                            ? order.Properties[settings.ShippingAddressZipCodePropertyAlias] : "",
+                        City = !string.IsNullOrWhiteSpace(settings.ShippingAddressCityPropertyAlias)
+                            ? order.Properties[settings.ShippingAddressCityPropertyAlias] : "",
+                        Country = countryIsoCode
+                    }
+                };
+
+                string phone = !string.IsNullOrWhiteSpace(settings.BillingPhonePropertyAlias)
+                    ? order.Properties[settings.BillingPhonePropertyAlias]
+                    : string.Empty;
+
+                phone = phone?
+                    .Replace(" ", "")
+                    .Replace("-", "")
+                    .Replace("-", "")
+                    .Replace("(", "")
+                    .Replace(")", "");
+
+                if (!string.IsNullOrEmpty(phone) &&
+                    Regex.Match(phone, @"^\+[0-9]{7,18}$").Success)
+                {
+                    var prefix = phone.Substring(0, 3);
+
+                    consumer.PhoneNumber = new DibsCustomerPhone
+                    {
+                        Prefix = prefix, // E.g "+45"
+                        Number = phone
+                    };
+                }
 
                 // Fill either privateperson or company, not both.
-
-                if (!string.IsNullOrWhiteSpace(settings.BillingCompanyPropertyAlias))
+                if (!string.IsNullOrWhiteSpace(company))
                 {
                     consumer.Company = new DibsCompany
                     {
-                        Name = order.Properties[settings.BillingCompanyPropertyAlias],
+                        Name = company,
                         Contact = new DibsCustomerName
                         {
                             FirstName = order.CustomerInfo.FirstName,
@@ -286,11 +339,6 @@ namespace Vendr.Contrib.PaymentProviders
                         Currency = currencyCode,
                         Amount = (int)orderAmount,
                         Items = items.ToArray()
-                    },
-                    Consumer = new DibsConsumer
-                    {
-                        Reference = order.CustomerInfo.CustomerReference,
-                        Email = order.CustomerInfo.Email
                     },
                     Checkout = new DibsCheckout
                     {
@@ -349,6 +397,8 @@ namespace Vendr.Contrib.PaymentProviders
                         }
                     }
                 };
+
+                var json = JsonConvert.SerializeObject(data);
 
                 // Create payment
                 var payment = client.CreatePayment(data);
