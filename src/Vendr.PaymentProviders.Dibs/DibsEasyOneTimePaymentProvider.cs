@@ -301,11 +301,12 @@ namespace Vendr.Contrib.PaymentProviders
                     Regex.Match(phone, @"^\+[0-9]{7,18}$").Success)
                 {
                     var prefix = phone.Substring(0, 3);
+                    var number = phone.Substring(3);
 
                     consumer.PhoneNumber = new DibsCustomerPhone
                     {
                         Prefix = prefix, // E.g "+45"
-                        Number = phone
+                        Number = number
                     };
                 }
 
