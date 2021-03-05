@@ -368,11 +368,13 @@ namespace Vendr.Contrib.PaymentProviders
             try
             {
                 // Process callback
+
+                var webhookAuthKey = order.Properties["dibsEasyWebhookAuthKey"]?.Value;
                 
                 var clientConfig = GetDibsEasyClientConfig(settings);
                 var client = new DibsEasyClient(clientConfig);
 
-                var dibsEvent = GetDibsWebhookEvent(client, request, order.Properties["dibsEasyWebhookAuthKey"]?.Value);
+                var dibsEvent = GetDibsWebhookEvent(client, request, webhookAuthKey);
 
                 if (dibsEvent != null)
                 {
