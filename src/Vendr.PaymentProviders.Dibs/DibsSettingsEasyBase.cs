@@ -9,29 +9,34 @@ namespace Vendr.PaymentProviders.Dibs
             SortOrder = 1000)]
         public string PaymentMethods { get; set; }
 
+        [PaymentProviderSetting(Name = "Billing Company Property Alias",
+            Description = "The order property alias containing company of the billing address.",
+            SortOrder = 1100)]
+        public string BillingCompanyPropertyAlias { get; set; }
+
         [PaymentProviderSetting(Name = "Terms URL",
             Description = "The URL to your terms and conditions.",
-            SortOrder = 1100)]
+            SortOrder = 1200)]
         public string TermsUrl { get; set; }
 
         [PaymentProviderSetting(Name = "Test Secret Key",
             Description = "Your test DIBS secret key",
-            SortOrder = 1200)]
+            SortOrder = 1300)]
         public string TestSecretKey { get; set; }
 
         [PaymentProviderSetting(Name = "Live Secret Key",
             Description = "Your live DIBS secret key",
-            SortOrder = 1300)]
+            SortOrder = 1400)]
         public string LiveSecretKey { get; set; }
 
         [PaymentProviderSetting(Name = "Test Checkout Key",
             Description = "Your test DIBS checkout key",
-            SortOrder = 1400)]
+            SortOrder = 1500)]
         public string TestCheckoutKey { get; set; }
 
         [PaymentProviderSetting(Name = "Live Checkout Key",
             Description = "Your live DIBS checkout key",
-            SortOrder = 1500)]
+            SortOrder = 1600)]
         public string LiveCheckoutKey { get; set; }
     }
 }

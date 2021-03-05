@@ -28,6 +28,30 @@ namespace Vendr.PaymentProviders.Dibs.Easy.Api.Models
 
         [JsonProperty("email")]
         public string Email { get; set; }
+
+        [JsonProperty("privatePerson")]
+        public DibsCustomerName PrivatePerson { get; set; }
+
+        [JsonProperty("company")]
+        public DibsCompany Company { get; set; }
+    }
+
+    public class DibsCustomerName
+    {
+        [JsonProperty("firstName")]
+        public string FirstName { get; set; }
+
+        [JsonProperty("lastName")]
+        public string LastName { get; set; }
+    }
+
+    public class DibsCompany
+    {
+        [JsonProperty("name")]
+        public string Name { get; set; }
+
+        [JsonProperty("contact")]
+        public DibsCustomerName Contact { get; set; }
     }
 
     public class DibsCheckout
@@ -55,6 +79,9 @@ namespace Vendr.PaymentProviders.Dibs.Easy.Api.Models
 
         [JsonProperty("merchantHandlesConsumerData")]
         public bool MerchantHandlesConsumerData { get; set; }
+
+        [JsonProperty("consumer")]
+        public DibsConsumer Consumer { get; set; }
     }
 
     public class DibsNotifications

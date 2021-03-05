@@ -253,6 +253,31 @@ namespace Vendr.Contrib.PaymentProviders
                     }
                 }
 
+                var consumer = new DibsConsumer();
+
+                // Fill either privateperson or company, not both.
+
+                if (!string.IsNullOrWhiteSpace(settings.BillingCompanyPropertyAlias))
+                {
+                    consumer.Company = new DibsCompany
+                    {
+                        Name = order.Properties[settings.BillingCompanyPropertyAlias],
+                        Contact = new DibsCustomerName
+                        {
+                            FirstName = order.CustomerInfo.FirstName,
+                            LastName = order.CustomerInfo.LastName
+                        }
+                    };
+                }
+                else
+                {
+                    consumer.PrivatePerson = new DibsCustomerName
+                    {
+                        FirstName = order.CustomerInfo.FirstName,
+                        LastName = order.CustomerInfo.LastName
+                    };
+                }
+
                 var data = new DibsPaymentRequest
                 {
                     Order = new DibsOrder
@@ -282,7 +307,8 @@ namespace Vendr.Contrib.PaymentProviders
                                 ShowOrderSummary = true
                             }
                         },
-                        MerchantHandlesConsumerData = true
+                        MerchantHandlesConsumerData = true,
+                        Consumer = consumer
                     },
                     Notifications = new DibsNotifications
                     {
