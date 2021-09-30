@@ -1,3 +1,3 @@
 # Vendr Dibs Payment Provider
 
-Dibs Payment Provider for Vendr, the eCommerce package for Umbrao v8+
+Dibs Payment Provider for Vendr, the eCommerce package for Umbraco
